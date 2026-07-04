@@ -1,0 +1,348 @@
+"use client";
+
+import { useState } from "react";
+import { useForm, useFieldArray, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Plus, Trash2 } from "lucide-react";
+import {
+  permohonanSchema,
+  type PermohonanFormData,
+} from "@/lib/validations/permohonan";
+import LogoUpload from "@/components/forms/LogoUpload";
+
+const JENIS_PERUBAHAN_DATA = ["RKSP", "INWARD", "OUTWARD"] as const;
+const PIHAK_PENGAJU = ["NVOCC", "Operator Sarana Pengangkut"] as const;
+const OPSI_JUMLAH_BARIS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+export default function FormPermohonanPage() {
+  const [submitting, setSubmitting] = useState(false);
+  const [hasil, setHasil] = useState<{ kode_tracking: string } | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [jumlahBaris, setJumlahBaris] = useState(1);
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    setValue,
+    formState: { errors },
+    reset,
+  } = useForm<PermohonanFormData>({
+    resolver: zodResolver(permohonanSchema),
+    defaultValues: {
+      detail_perubahan: [{ data_yang_dirubah: "", data_semula: "", data_seharusnya: "" }],
+      logo_perusahaan_url: null,
+    },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "detail_perubahan",
+  });
+
+  function handleJumlahBarisChange(value: number) {
+    setJumlahBaris(value);
+    const selisih = value - fields.length;
+    if (selisih > 0) {
+      for (let i = 0; i < selisih; i++) {
+        append({ data_yang_dirubah: "", data_semula: "", data_seharusnya: "" });
+      }
+    } else if (selisih < 0) {
+      for (let i = 0; i < Math.abs(selisih); i++) {
+        remove(fields.length - 1 - i);
+      }
+    }
+  }
+
+  async function onSubmit(data: PermohonanFormData) {
+    setSubmitting(true);
+    setErrorMsg(null);
+    try {
+      const res = await fetch("/api/permohonan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const json = await res.json();
+
+      if (!res.ok) {
+        setErrorMsg(json.error ?? "Terjadi kesalahan");
+        return;
+      }
+
+      setHasil({ kode_tracking: json.kode_tracking });
+      reset();
+      setJumlahBaris(1);
+    } catch {
+      setErrorMsg("Gagal mengirim permohonan. Coba lagi.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  if (hasil) {
+    return (
+      <main className="min-h-screen flex items-center justify-center bg-slate-50 px-6">
+        <div className="max-w-md w-full bg-white rounded-xl border border-slate-200 p-8 text-center">
+          <h1 className="text-xl font-bold text-slate-900">
+            Permohonan Berhasil Diajukan
+          </h1>
+          <p className="mt-2 text-slate-600">Simpan kode tracking berikut untuk memantau status:</p>
+          <p className="mt-4 text-2xl font-mono font-bold text-blue-600">
+            {hasil.kode_tracking}
+          </p>
+          <a href="/status" className="mt-6 inline-block text-sm text-blue-600 hover:underline">
+            Cek status sekarang →
+          </a>
+        </div>
+      </main>
+    );
+  }
+
+  return (
+    <main className="min-h-screen bg-slate-50 px-6 py-16">
+      <div className="max-w-3xl mx-auto bg-white rounded-xl border border-slate-200 p-8">
+        <h1 className="text-2xl font-bold text-slate-900">
+          Formulir Permohonan Perubahan Data BC 1.1
+        </h1>
+        <p className="text-slate-600 mt-1 text-sm">
+          Isi data di bawah ini dengan benar. Permohonan akan diteruskan ke admin untuk ditinjau.
+        </p>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-6">
+          {/* Data Perusahaan */}
+          <fieldset className="space-y-4">
+            <legend className="font-semibold text-slate-800 text-sm">Data Perusahaan</legend>
+
+            <Field label="Logo Perusahaan">
+              <Controller
+                control={control}
+                name="logo_perusahaan_url"
+                render={() => (
+                  <LogoUpload
+                    onUploaded={(url) => setValue("logo_perusahaan_url", url)}
+                  />
+                )}
+              />
+            </Field>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Nama Perusahaan" error={errors.nama_perusahaan?.message}>
+                <input {...register("nama_perusahaan")} className="input" />
+              </Field>
+              <Field label="Kota" error={errors.kota?.message}>
+                <input {...register("kota")} className="input" />
+              </Field>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Email Perusahaan" error={errors.email_perusahaan?.message}>
+                <input {...register("email_perusahaan")} type="email" className="input" />
+              </Field>
+              <Field label="Alamat Perusahaan" error={errors.alamat_perusahaan?.message}>
+                <input {...register("alamat_perusahaan")} className="input" />
+              </Field>
+            </div>
+          </fieldset>
+
+          {/* Data Surat */}
+          <fieldset className="space-y-4 border-t border-slate-100 pt-6">
+            <legend className="font-semibold text-slate-800 text-sm">Data Surat Permohonan</legend>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Nomor Surat Permohonan" error={errors.nomor_surat_permohonan?.message}>
+                <input {...register("nomor_surat_permohonan")} className="input" />
+              </Field>
+              <Field label="Tanggal Surat Permohonan" error={errors.tanggal_surat_permohonan?.message}>
+                <input {...register("tanggal_surat_permohonan")} type="date" className="input" />
+              </Field>
+            </div>
+
+            <Field label="Perihal" error={errors.perihal?.message}>
+              <input {...register("perihal")} className="input" placeholder="Perihal surat permohonan" />
+            </Field>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Jenis Perubahan Data" error={errors.jenis_perubahan_data?.message}>
+                <select {...register("jenis_perubahan_data")} className="input">
+                  <option value="">Pilih jenis perubahan data</option>
+                  {JENIS_PERUBAHAN_DATA.map((j) => (
+                    <option key={j} value={j}>{j}</option>
+                  ))}
+                </select>
+              </Field>
+              <Field label="Pihak yang Mengajukan Perubahan" error={errors.pihak_pengaju?.message}>
+                <select {...register("pihak_pengaju")} className="input">
+                  <option value="">Pilih pihak pengaju</option>
+                  {PIHAK_PENGAJU.map((p) => (
+                    <option key={p} value={p}>{p}</option>
+                  ))}
+                </select>
+              </Field>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Nomor Aju Manifes" error={errors.nomor_aju_manifes?.message}>
+                <input {...register("nomor_aju_manifes")} className="input" />
+              </Field>
+              <Field label="Nomor Pendaftaran BC 1.1" error={errors.nomor_pendaftaran_bc11?.message}>
+                <input
+                  {...register("nomor_pendaftaran_bc11")}
+                  className="input"
+                  placeholder="001234 tanggal 1 Januari 2026 Pos 0001"
+                />
+              </Field>
+            </div>
+
+            <Field label="Alasan Melakukan Perubahan Data" error={errors.alasan_perubahan?.message}>
+              <textarea {...register("alasan_perubahan")} className="input" rows={3} />
+            </Field>
+          </fieldset>
+
+          {/* Tabel Detail Perubahan */}
+          <fieldset className="space-y-3 border-t border-slate-100 pt-6">
+            <div className="flex items-center justify-between">
+              <legend className="font-semibold text-slate-800 text-sm">
+                Detail Perubahan Data
+              </legend>
+              <div className="flex items-center gap-2">
+                <label className="text-xs text-slate-500">Jumlah baris:</label>
+                <select
+                  value={jumlahBaris}
+                  onChange={(e) => handleJumlahBarisChange(Number(e.target.value))}
+                  className="input !w-auto text-xs py-1"
+                >
+                  {OPSI_JUMLAH_BARIS.map((n) => (
+                    <option key={n} value={n}>{n}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            {errors.detail_perubahan?.message && (
+              <p className="text-xs text-red-600">{errors.detail_perubahan.message}</p>
+            )}
+
+            <div className="overflow-x-auto border border-slate-200 rounded-lg">
+              <table className="w-full text-sm">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th className="px-3 py-2 text-left font-medium text-slate-600 w-1/4">
+                      Data yang Dirubah
+                    </th>
+                    <th className="px-3 py-2 text-left font-medium text-slate-600">
+                      Data Semula
+                    </th>
+                    <th className="px-3 py-2 text-left font-medium text-slate-600">
+                      Data Seharusnya
+                    </th>
+                    <th className="w-10" />
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {fields.map((field, index) => (
+                    <tr key={field.id}>
+                      <td className="p-2 align-top">
+                        <input
+                          {...register(`detail_perubahan.${index}.data_yang_dirubah`)}
+                          className="input"
+                          placeholder="Contoh: Nama Consignee"
+                        />
+                        {errors.detail_perubahan?.[index]?.data_yang_dirubah && (
+                          <p className="text-xs text-red-600 mt-0.5">
+                            {errors.detail_perubahan[index]?.data_yang_dirubah?.message}
+                          </p>
+                        )}
+                      </td>
+                      <td className="p-2 align-top">
+                        <input
+                          {...register(`detail_perubahan.${index}.data_semula`)}
+                          className="input"
+                        />
+                      </td>
+                      <td className="p-2 align-top">
+                        <input
+                          {...register(`detail_perubahan.${index}.data_seharusnya`)}
+                          className="input"
+                        />
+                      </td>
+                      <td className="p-2 align-top">
+                        {fields.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              remove(index);
+                              setJumlahBaris((v) => v - 1);
+                            }}
+                            className="text-slate-400 hover:text-red-600"
+                            aria-label="Hapus baris"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => {
+                append({ data_yang_dirubah: "", data_semula: "", data_seharusnya: "" });
+                setJumlahBaris((v) => v + 1);
+              }}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:underline"
+            >
+              <Plus size={14} /> Tambah baris
+            </button>
+          </fieldset>
+
+          {/* Penandatangan */}
+          <fieldset className="space-y-4 border-t border-slate-100 pt-6">
+            <legend className="font-semibold text-slate-800 text-sm">Penandatangan</legend>
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Nama Penandatangan" error={errors.nama_penandatangan?.message}>
+                <input {...register("nama_penandatangan")} className="input" />
+              </Field>
+              <Field label="Jabatan Penandatangan" error={errors.jabatan_penandatangan?.message}>
+                <input {...register("jabatan_penandatangan")} className="input" />
+              </Field>
+            </div>
+          </fieldset>
+
+          {errorMsg && (
+            <p className="text-sm text-red-600 bg-red-50 rounded-md px-3 py-2">{errorMsg}</p>
+          )}
+
+          <button
+            type="submit"
+            disabled={submitting}
+            className="w-full rounded-lg bg-blue-600 py-3 font-medium text-white hover:bg-blue-700 disabled:opacity-60 transition"
+          >
+            {submitting ? "Mengirim..." : "Ajukan Permohonan"}
+          </button>
+        </form>
+      </div>
+    </main>
+  );
+}
+
+function Field({
+  label,
+  error,
+  children,
+}: {
+  label: string;
+  error?: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
+      {children}
+      {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
+    </div>
+  );
+}

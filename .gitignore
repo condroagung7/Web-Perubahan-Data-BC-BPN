@@ -1,0 +1,54 @@
+# ===== Dependencies =====
+node_modules/
+.pnp
+.pnp.js
+
+# ===== Next.js build output =====
+.next/
+out/
+build/
+dist/
+
+# ===== Environment variables (JANGAN pernah di-push!) =====
+.env
+.env*.local
+.env.production
+.env.development
+
+# ===== Vercel =====
+.vercel
+
+# ===== TypeScript =====
+*.tsbuildinfo
+next-env.d.ts
+
+# ===== Testing =====
+coverage/
+
+# ===== Logs =====
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+logs/
+*.log
+
+# ===== OS files =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== Editor / IDE =====
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+
+# ===== Supabase local dev (kalau pakai Supabase CLI) =====
+supabase/.branches
+supabase/.temp
+
+# ===== Misc =====
+*.pem
+.turbo
