@@ -3,6 +3,8 @@ import { createServiceRoleClient } from "@/lib/supabase/server";
 import { permohonanSchema } from "@/lib/validations/permohonan";
 import { kirimNotifikasiPermohonanBaru } from "@/lib/email/resend";
 
+const EMPTY_MANIFEST_VALUE = "-";
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -15,11 +17,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const isSaranaPengangkut = parsed.data.alasan_perubahan === "Sarana Pengangkut";
     const supabase = createServiceRoleClient();
+    const insertData = {
+      ...parsed.data,
+      nomor_pos: isSaranaPengangkut ? EMPTY_MANIFEST_VALUE : parsed.data.nomor_pos,
+      nama_sarana_pengangkut: isSaranaPengangkut
+        ? EMPTY_MANIFEST_VALUE
+        : parsed.data.nama_sarana_pengangkut,
+      nomor_bl_awb: isSaranaPengangkut ? EMPTY_MANIFEST_VALUE : parsed.data.nomor_bl_awb,
+      tanggal_bl_awb: isSaranaPengangkut ? "1970-01-01" : parsed.data.tanggal_bl_awb,
+      jumlah_kemasan: isSaranaPengangkut ? EMPTY_MANIFEST_VALUE : parsed.data.jumlah_kemasan,
+      berat_kotor: isSaranaPengangkut ? EMPTY_MANIFEST_VALUE : parsed.data.berat_kotor,
+      uraian_barang: isSaranaPengangkut ? EMPTY_MANIFEST_VALUE : parsed.data.uraian_barang,
+      nama_shipper: isSaranaPengangkut ? EMPTY_MANIFEST_VALUE : parsed.data.nama_shipper,
+      nama_consignee: isSaranaPengangkut ? EMPTY_MANIFEST_VALUE : parsed.data.nama_consignee,
+      nama_penandatangan: "-",
+      jabatan_penandatangan: "Kepala Kantor",
+    };
 
     const { data, error } = await supabase
       .from("permohonan")
-      .insert(parsed.data)
+      .insert(insertData)
       .select()
       .single();
 
@@ -31,8 +50,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Kirim notifikasi email ke instansi — kegagalan email tidak membatalkan
-    // permohonan yang sudah tersimpan, hanya dicatat di log.
     try {
       await kirimNotifikasiPermohonanBaru(data);
     } catch (emailError) {
@@ -55,7 +72,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// GET ?kode=xxxxx -> cek status permohonan oleh publik (tanpa expose data sensitif penuh)
 export async function GET(request: NextRequest) {
   const kode = request.nextUrl.searchParams.get("kode");
 

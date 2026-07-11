@@ -40,16 +40,19 @@ export async function kirimNotifikasiPermohonanBaru(data: Permohonan) {
         <table style="width: 100%; border-collapse: collapse;">
           <tr><td style="padding: 6px 0;"><strong>Kode Tracking</strong></td><td>${data.kode_tracking}</td></tr>
           <tr><td style="padding: 6px 0;"><strong>Nama Perusahaan</strong></td><td>${data.nama_perusahaan}</td></tr>
-          <tr><td style="padding: 6px 0;"><strong>Kota</strong></td><td>${data.kota}</td></tr>
           <tr><td style="padding: 6px 0;"><strong>Nomor Surat Permohonan</strong></td><td>${data.nomor_surat_permohonan}</td></tr>
           <tr><td style="padding: 6px 0;"><strong>Tanggal Surat</strong></td><td>${data.tanggal_surat_permohonan}</td></tr>
           <tr><td style="padding: 6px 0;"><strong>Perihal</strong></td><td>${data.perihal}</td></tr>
           <tr><td style="padding: 6px 0;"><strong>Jenis Perubahan Data</strong></td><td>${data.jenis_perubahan_data}</td></tr>
           <tr><td style="padding: 6px 0;"><strong>Pihak Pengaju</strong></td><td>${data.pihak_pengaju}</td></tr>
           <tr><td style="padding: 6px 0;"><strong>Nomor Aju Manifes</strong></td><td>${data.nomor_aju_manifes}</td></tr>
+          <tr><td style="padding: 6px 0;"><strong>Nomor Pos</strong></td><td>${data.nomor_pos}</td></tr>
+          <tr><td style="padding: 6px 0;"><strong>Nama Sarana Pengangkut</strong></td><td>${data.nama_sarana_pengangkut}</td></tr>
+          <tr><td style="padding: 6px 0;"><strong>Nomor BL/AWB</strong></td><td>${data.nomor_bl_awb}</td></tr>
+          <tr><td style="padding: 6px 0;"><strong>Shipper / Consignee</strong></td><td>${data.nama_shipper} / ${data.nama_consignee}</td></tr>
           <tr><td style="padding: 6px 0;"><strong>Nomor Pendaftaran BC 1.1</strong></td><td>${data.nomor_pendaftaran_bc11}</td></tr>
           <tr><td style="padding: 6px 0;"><strong>Alasan Perubahan</strong></td><td>${data.alasan_perubahan}</td></tr>
-          <tr><td style="padding: 6px 0;"><strong>Penandatangan</strong></td><td>${data.nama_penandatangan} (${data.jabatan_penandatangan})</td></tr>
+          
         </table>
         <p style="margin-top:16px;"><strong>Detail Perubahan Data:</strong></p>
         ${tabelDetailHtml(data)}

@@ -7,11 +7,15 @@ export interface DetailPerubahan {
   data_semula: string;
   data_seharusnya: string;
 }
+export interface DokumenPendukung {
+  nama: string;
+  url: string;
+  nama_file: string;
+}
 
 export interface Permohonan {
   id: string;
   nama_perusahaan: string;
-  kota: string;
   nomor_surat_permohonan: string;
   tanggal_surat_permohonan: string;
   perihal: string;
@@ -22,10 +26,21 @@ export interface Permohonan {
   nomor_pendaftaran_bc11: string;
   nama_penandatangan: string;
   jabatan_penandatangan: string;
-  logo_perusahaan_url: string | null;
+
+  nomor_pos: string;
+  nama_sarana_pengangkut: string;
+  nomor_bl_awb: string;
+  tanggal_bl_awb: string;
+  jumlah_kemasan: string;
+  berat_kotor: string;
+  uraian_barang: string;
+  nama_shipper: string;
+  nama_consignee: string;
+
   email_perusahaan: string;
   alamat_perusahaan: string;
   detail_perubahan: DetailPerubahan[];
+  dokumen_pendukung: DokumenPendukung[];
   status: StatusPermohonan;
   surat_persetujuan_url: string | null;
   catatan_admin: string | null;
@@ -54,9 +69,15 @@ export interface Database {
     Tables: {
       permohonan: {
         Row: Permohonan;
-        Insert: Omit<
+        Insert: Omit <
           Permohonan,
-          "id" | "status" | "surat_persetujuan_url" | "catatan_admin" | "kode_tracking" | "created_at" | "updated_at"
+          | "id"
+          | "status"
+          | "surat_persetujuan_url"
+          | "catatan_admin"
+          | "kode_tracking"
+          | "created_at"
+          | "updated_at"
         >;
         Update: Partial<Permohonan>;
       };

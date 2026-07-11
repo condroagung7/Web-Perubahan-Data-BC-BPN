@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { kirimNotifikasiPenolakan } from "@/lib/email/resend";
+import { assertAdmin } from "@/lib/auth/admin";
 
 export async function POST(request: NextRequest) {
   const supabaseAuth = await createClient();
@@ -12,10 +13,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Tidak diizinkan" }, { status: 401 });
   }
 
+  const adminError = assertAdmin(user);
+  if (adminError) return adminError;
+
   const { id, catatan } = await request.json();
   if (!id || !catatan) {
     return NextResponse.json(
-      { error: "ID permohonan dan catatan penolakan wajib diisi" },
+      { error: "ID permohonan dan catatan kekurangan dokumen wajib diisi" },
       { status: 400 }
     );
   }
@@ -52,8 +56,8 @@ export async function POST(request: NextRequest) {
   try {
     await kirimNotifikasiPenolakan(permohonan, catatan);
   } catch (emailError) {
-    console.error("Gagal kirim email penolakan:", emailError);
+    console.error("Gagal kirim email kekurangan dokumen:", emailError);
   }
 
-  return NextResponse.json({ message: "Permohonan ditolak" });
+  return NextResponse.json({ message: "Permohonan ditandai kekurangan dokumen" });
 }

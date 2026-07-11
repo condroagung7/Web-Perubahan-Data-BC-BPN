@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist_Mono, Plus_Jakarta_Sans, Inter } from "next/font/google";
 import "./globals.css";
 import ChatWidget from "@/components/chat/ChatWidget";
+import { ThemeProvider } from "@/components/theme/ThemeProvider";
 
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-display",
@@ -24,6 +25,19 @@ export const metadata: Metadata = {
   description: "Layanan pengajuan permohonan perubahan data secara online",
 };
 
+// Script kecil ini jalan sebelum React hydrate, supaya tidak ada "kedipan"
+// (flash) dari mode terang ke gelap saat halaman pertama kali dimuat.
+const themeInitScript = `
+  (function () {
+    try {
+      var stored = localStorage.getItem('theme');
+      var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var theme = stored || (prefersDark ? 'dark' : 'light');
+      if (theme === 'dark') document.documentElement.classList.add('dark');
+    } catch (e) {}
+  })();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -32,11 +46,17 @@ export default function RootLayout({
   return (
     <html
       lang="id"
+      suppressHydrationWarning
       className={`${jakarta.variable} ${inter.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">
-        {children}
-        <ChatWidget />
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
+      <body className="min-h-full flex flex-col bg-white dark:bg-slate-950 transition-colors">
+        <ThemeProvider>
+          {children}
+          <ChatWidget />
+        </ThemeProvider>
       </body>
     </html>
   );

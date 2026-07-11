@@ -1,10 +1,19 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
-/**
- * Refresh sesi Supabase di setiap request & lindungi route /admin.
- * Dipanggil dari middleware.ts di root project.
- */
+function getAdminEmails() {
+  return (process.env.ADMIN_EMAILS ?? "")
+    .split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+function isAdminEmail(email?: string | null) {
+  const adminEmails = getAdminEmails();
+  if (adminEmails.length === 0) return false;
+  return Boolean(email && adminEmails.includes(email.toLowerCase()));
+}
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -17,9 +26,7 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
+          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
           supabaseResponse = NextResponse.next({ request });
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
@@ -36,15 +43,20 @@ export async function updateSession(request: NextRequest) {
   const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
   const isLoginRoute = request.nextUrl.pathname.startsWith("/admin/login");
 
-  // Belum login & mengakses halaman admin (kecuali halaman login) -> redirect ke login
   if (isAdminRoute && !isLoginRoute && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/admin/login";
     return NextResponse.redirect(url);
   }
 
-  // Sudah login & buka halaman login -> redirect ke dashboard
-  if (isLoginRoute && user) {
+  if (isAdminRoute && !isLoginRoute && user && !isAdminEmail(user.email)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/admin/login";
+    url.searchParams.set("error", "unauthorized");
+    return NextResponse.redirect(url);
+  }
+
+  if (isLoginRoute && user && isAdminEmail(user.email)) {
     const url = request.nextUrl.clone();
     url.pathname = "/admin/dashboard";
     return NextResponse.redirect(url);

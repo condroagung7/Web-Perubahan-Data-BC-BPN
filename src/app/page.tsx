@@ -1,248 +1,282 @@
+import Image from "next/image";
 import Link from "next/link";
 import {
-  FileEdit,
-  Search,
-  ShieldCheck,
-  UserCheck,
-  Building2,
+  ArrowRight,
   Bot,
   CheckCircle2,
-  ArrowRight,
+  Clock3,
+  Eye,
+  FileText,
+  Lock,
+  LogIn,
+  Search,
+  ShieldCheck,
+  Ship,
+  Sparkles,
+  UploadCloud,
 } from "lucide-react";
+import ThemeToggle from "@/components/theme/ThemeToggle";
+import ChatOpenButton from "@/components/chat/ChatOpenButton";
 
-const PERAN = [
-  { label: "Pemohon", icon: UserCheck },
-  { label: "Verifikator", icon: ShieldCheck },
-  { label: "Admin", icon: Building2 },
-  { label: "Asisten AI", icon: Bot },
+const HERO_IMAGE = "/images/landing-option-7-hero.png";
+
+const NAV = [
+  { label: "Beranda", href: "#beranda" },
+  { label: "Ajukan Permohonan", href: "/permohonan" },
+  { label: "Cek Status", href: "/status" },
+  { label: "Panduan", href: "#panduan" },
 ];
 
-const MENU_STRIP = ["Ajukan Permohonan", "Cek Status", "Riwayat Perubahan", "Bantuan"];
+const ACTIONS = [
+  {
+    title: "Ajukan Permohonan",
+    desc: "Ajukan perubahan data manifes dengan mudah dan cepat.",
+    href: "/permohonan",
+    icon: UploadCloud,
+    cta: "Ajukan Sekarang",
+  },
+  {
+    title: "Cek Status Permohonan",
+    desc: "Pantau status permohonan Anda secara real-time.",
+    href: "/status",
+    icon: Search,
+    cta: "Cek Status",
+  },
+  {
+    title: "Bantuan AI",
+    desc: "Dapatkan panduan dan jawaban instan dari asisten AI BERIMAN.",
+    href: "",
+    icon: Bot,
+    cta: "Tanya AI",
+    chat: true,
+  },
+];
+
+const FEATURES = [
+  { label: "Terintegrasi", desc: "Sistem kepabeanan nasional", icon: Ship },
+  { label: "Aman", desc: "Sertifikasi ISO 27001", icon: Lock },
+  { label: "Cepat", desc: "Rata-rata verifikasi 1,6 jam", icon: Clock3 },
+  { label: "Terlacak", desc: "Monitor real-time", icon: Eye },
+];
+
+const STEPS = [
+  "Siapkan surat permohonan dan dokumen pendukung.",
+  "Isi formulir perubahan data BC 1.1.",
+  "Petugas meninjau kelengkapan dokumen.",
+  "Surat persetujuan diterbitkan secara elektronik.",
+];
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-white">
-      {/* NAVBAR */}
-      <header className="bg-[#0B2545] text-white">
-        <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="grid place-items-center h-9 w-9 rounded-lg bg-[#E8A83C]">
-              <FileEdit size={18} className="text-[#0B2545]" />
-            </div>
-            <div className="leading-tight">
-              <p className="font-display font-bold text-sm tracking-wide">
-                Siap Landing
-              </p>
-              <p className="text-[11px] text-white/60 -mt-0.5">Gawi Tuntas</p>
-            </div>
-          </div>
+    <main className="min-h-screen bg-[#071525] text-white">
+      <section id="beranda" className="relative min-h-screen overflow-hidden">
+        <Image
+          src={HERO_IMAGE}
+          alt=""
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-linear-to-r from-[#071525]/96 via-[#071525]/54 to-[#071525]/20" />
+        <div className="absolute inset-0 bg-linear-to-t from-[#071525] via-transparent to-[#071525]/35" />
 
-          <nav className="hidden md:flex items-center gap-7 text-sm text-white/85">
-            <a href="#beranda" className="hover:text-white transition">
-              Beranda
-            </a>
-            <a href="#layanan" className="hover:text-white transition">
-              Layanan
-            </a>
-            <a href="#peran" className="hover:text-white transition">
-              Peran
-            </a>
-            <Link href="/status" className="hover:text-white transition">
-              Lacak Permohonan
-            </Link>
+        <header className="relative z-10 mx-auto flex h-18 max-w-7xl items-center justify-between px-6">
+          <Link href="/" className="flex items-center gap-3">
+            <div className="grid h-10 w-10 place-items-center rounded-xl bg-white/10 text-[#E8A83C] ring-1 ring-white/15 backdrop-blur">
+              <Ship size={20} />
+            </div>
+            <div>
+              <p className="text-xl font-black leading-none tracking-wide">BERIMAN</p>
+              <p className="mt-1 text-[11px] font-medium text-blue-100">
+                Benar, Rapi dan Aman
+              </p>
+            </div>
+          </Link>
+
+          <nav className="hidden items-center gap-7 text-xs font-semibold text-blue-100 lg:flex">
+            {NAV.map((item) => (
+              <Link key={item.label} href={item.href} className="transition hover:text-[#E8A83C]">
+                {item.label}
+              </Link>
+            ))}
           </nav>
 
-          <Link
-            href="/permohonan"
-            className="rounded-md bg-[#E8A83C] text-[#0B2545] text-sm font-semibold px-4 py-2 hover:bg-[#f3ba5c] transition whitespace-nowrap"
-          >
-            Ajukan Sekarang
-          </Link>
-        </div>
-      </header>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Link
+              href="/admin/login"
+              className="inline-flex items-center gap-1.5 rounded-md border border-white/25 bg-white/10 px-3 py-2 text-xs font-bold text-white backdrop-blur transition hover:bg-white/15"
+            >
+              <LogIn size={14} />
+              Login Admin
+            </Link>
+          </div>
+        </header>
 
-      {/* HERO */}
-      <section
-        id="beranda"
-        className="bg-gradient-to-b from-[#EAF4FC] to-white px-6 pt-16 pb-20"
-      >
-        <div className="mx-auto max-w-6xl grid md:grid-cols-2 gap-12 items-center">
-          <div>
-            <p className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#0B2545] bg-[#E8A83C]/20 px-3 py-1 rounded-full">
-              Layanan Digital Resmi
-            </p>
-            <h1 className="font-display font-extrabold text-[#0B2545] text-4xl sm:text-5xl leading-tight mt-4">
-              Ajukan Perubahan
-              <br />
-              Data Anda, <span className="text-[#E8A83C]">dimana saja</span>
+        <div className="relative z-10 mx-auto grid max-w-7xl gap-8 px-6 pb-10 pt-10 lg:grid-cols-[1fr_400px] lg:items-center">
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#E8A83C]/35 bg-[#E8A83C]/10 px-3 py-1 text-xs font-bold text-[#F6C96D] backdrop-blur">
+              <Sparkles size={13} />
+              Layanan digital perubahan data manifes
+            </div>
+
+            <h1 className="mt-6 text-4xl font-black leading-tight tracking-tight sm:text-5xl">
+              Urus Perubahan Data Manifes
+              <span className="block">Semudah Ini.</span>
             </h1>
-            <p className="text-slate-600 mt-4 text-base max-w-md">
-              Dari data yang salah menjadi data yang seharusnya — diajukan,
-              diverifikasi, dan disetujui secara digital dengan kode tracking
-              yang bisa dipantau kapan saja.
+
+            <p className="mt-4 max-w-xl text-sm leading-6 text-blue-100 sm:text-[15px]">
+              Digital, terintegrasi, dan didukung AI untuk proses yang lebih cepat
+              dan akurat.
             </p>
 
-            <div className="mt-8 flex flex-wrap gap-3">
+            <Link
+              href="#panduan"
+              className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-blue-100 transition hover:text-[#E8A83C]"
+            >
+              
+            </Link>
+
+            <div className="mt-6 flex flex-wrap gap-3">
               <Link
                 href="/permohonan"
-                className="inline-flex items-center gap-2 rounded-lg bg-[#0B2545] text-white px-6 py-3 font-semibold text-sm hover:bg-[#123564] transition"
+                className="inline-flex items-center gap-2 rounded-md bg-[#E8A83C] px-4 py-2.5 text-sm font-black text-[#0B2545] transition hover:bg-[#f3ba5c]"
               >
-                Ajukan Permohonan <ArrowRight size={16} />
+                Ajukan Permohonan
+                <ArrowRight size={16} />
               </Link>
               <Link
                 href="/status"
-                className="inline-flex items-center gap-2 rounded-lg border border-[#0B2545]/20 text-[#0B2545] px-6 py-3 font-semibold text-sm hover:bg-[#0B2545]/5 transition"
+                className="inline-flex items-center gap-2 rounded-md border border-white/30 bg-white/10 px-4 py-2.5 text-sm font-bold text-white backdrop-blur transition hover:bg-white/15"
               >
-                <Search size={16} /> Cek Status
+                Cek Status Permohonan
               </Link>
             </div>
           </div>
 
-          {/* Signature illustration: document transforming into approval letter */}
-          <div className="relative flex justify-center">
-            <svg
-              viewBox="0 0 420 340"
-              className="w-full max-w-sm"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <ellipse cx="210" cy="300" rx="150" ry="18" fill="#0B2545" opacity="0.06" />
-
-              {/* Data lama - kartu miring, memudar */}
-              <g transform="translate(30,70) rotate(-8)">
-                <rect width="150" height="190" rx="14" fill="#CBD5E1" opacity="0.5" />
-                <rect x="18" y="26" width="90" height="10" rx="5" fill="#94A3B8" />
-                <rect x="18" y="50" width="114" height="8" rx="4" fill="#CBD5E1" />
-                <rect x="18" y="66" width="114" height="8" rx="4" fill="#CBD5E1" />
-                <rect x="18" y="82" width="70" height="8" rx="4" fill="#CBD5E1" />
-              </g>
-
-              {/* Arrow */}
-              <path
-                d="M170 160 L220 160"
-                stroke="#E8A83C"
-                strokeWidth="4"
-                strokeLinecap="round"
-                markerEnd="url(#arrowhead)"
-              />
-              <defs>
-                <marker
-                  id="arrowhead"
-                  markerWidth="10"
-                  markerHeight="10"
-                  refX="6"
-                  refY="5"
-                  orient="auto"
+          <div className="space-y-3">
+            {ACTIONS.map((action) => {
+              const Icon = action.icon;
+              return (
+                <div
+                  key={action.title}
+                  className="group block rounded-xl border border-white/18 bg-[#0B2545]/55 p-4 shadow-2xl backdrop-blur-md transition hover:-translate-y-1 hover:border-[#E8A83C]/60 hover:bg-[#0B2545]/70"
                 >
-                  <path d="M0,0 L10,5 L0,10 Z" fill="#E8A83C" />
-                </marker>
-              </defs>
+                  <div className="flex items-start gap-3">
+                    <div className="grid h-11 w-11 shrink-0 place-items-center rounded-xl bg-blue-400/15 text-[#E8A83C] ring-1 ring-white/10">
+                      <Icon size={21} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h2 className="text-sm font-black">{action.title}</h2>
+                      <p className="mt-1 text-xs leading-5 text-blue-100">{action.desc}</p>
+                      {action.chat ? (
+                        <ChatOpenButton label={action.cta} />
+                      ) : (
+                        <Link
+                          href={action.href}
+                          className="mt-4 inline-flex items-center gap-2 rounded-md border border-white/20 px-3 py-2 text-xs font-black text-white transition group-hover:border-[#E8A83C] group-hover:text-[#E8A83C]"
+                        >
+                          {action.cta}
+                          <ArrowRight size={14} className="transition group-hover:translate-x-1" />
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
-              {/* Surat persetujuan - kartu utama */}
-              <g transform="translate(230,40)">
-                <rect width="165" height="220" rx="16" fill="#0B2545" />
-                <rect x="20" y="28" width="100" height="12" rx="6" fill="#E8A83C" />
-                <rect x="20" y="56" width="125" height="8" rx="4" fill="#ffffff" opacity="0.3" />
-                <rect x="20" y="72" width="125" height="8" rx="4" fill="#ffffff" opacity="0.3" />
-                <rect x="20" y="88" width="90" height="8" rx="4" fill="#ffffff" opacity="0.3" />
-                <circle cx="82" cy="160" r="34" fill="#E8A83C" />
-              </g>
-
-              {/* Check icon di atas lingkaran gold */}
-              <g transform="translate(285,177)">
-                <path
-                  d="M0 8 L8 16 L24 -4"
-                  stroke="#0B2545"
-                  strokeWidth="5"
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </g>
-            </svg>
+        <div className="relative z-10 mx-auto max-w-7xl px-6 pb-8">
+          <div className="grid gap-2 rounded-2xl border border-white/10 bg-black/32 p-3 backdrop-blur-md md:grid-cols-4">
+            {FEATURES.map((feature) => {
+              const Icon = feature.icon;
+              return (
+                <div key={feature.label} className="flex gap-3 rounded-xl px-3 py-3">
+                  <div className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-white/10 text-[#E8A83C]">
+                    <Icon size={17} />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black">{feature.label}</h3>
+                    <p className="mt-1 text-xs leading-5 text-blue-100">{feature.desc}</p>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* PERAN / ROLE BADGES */}
-      <section id="peran" className="px-6 py-16 bg-white">
-        <div className="mx-auto max-w-6xl">
-          <h2 className="font-display font-bold text-[#0B2545] text-2xl text-center">
-            Empat Peran, Satu Alur yang Jelas
-          </h2>
-          <p className="text-slate-500 text-sm text-center mt-2 max-w-lg mx-auto">
-            Setiap permohonan melewati tahapan yang sama, dari pengajuan hingga
-            surat persetujuan terbit.
-          </p>
+      <section id="panduan" className="bg-[#071525] px-6 py-16">
+        <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[360px_1fr]">
+          <div>
+            <p className="text-xs font-black uppercase tracking-[0.25em] text-[#E8A83C]">
+              Alur Pengajuan
+            </p>
+            <h2 className="mt-3 text-3xl font-black">Dari dokumen sampai surat terbit.</h2>
+            <p className="mt-4 text-sm leading-7 text-blue-100">
+              Ikuti langkah pengajuan secara digital dan pantau status permohonan
+              kapan saja.
+            </p>
+          </div>
 
-          <div className="mt-10 grid grid-cols-2 sm:grid-cols-4 gap-8">
-            {PERAN.map(({ label, icon: Icon }) => (
-              <div key={label} className="flex flex-col items-center gap-3">
-                <div className="h-20 w-20 rounded-full bg-[#0B2545] grid place-items-center ring-4 ring-[#E8A83C]/30">
-                  <Icon size={30} className="text-[#E8A83C]" />
+          <div className="grid gap-4 md:grid-cols-2">
+            {STEPS.map((step, index) => (
+              <div key={step} className="rounded-xl border border-white/10 bg-white/6 p-5">
+                <div className="mb-4 grid h-9 w-9 place-items-center rounded-full bg-[#E8A83C] text-sm font-black text-[#0B2545]">
+                  {index + 1}
                 </div>
-                <span className="font-semibold text-sm text-[#0B2545]">
-                  {label}
-                </span>
+                <p className="text-sm font-semibold leading-6 text-white">{step}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* LAYANAN */}
-      <section id="layanan" className="px-6 py-16 bg-[#F7FAFD]">
-        <div className="mx-auto max-w-6xl grid sm:grid-cols-3 gap-6">
-          <FiturCard
-            icon={ShieldCheck}
-            title="Aman & Tercatat"
-            desc="Setiap permohonan tersimpan dengan kode tracking unik dan riwayat status lengkap."
-          />
-          <FiturCard
-            icon={FileEdit}
-            title="Proses Cepat"
-            desc="Surat persetujuan diterbitkan otomatis begitu admin menyetujui permohonan."
-          />
-          <FiturCard
-            icon={CheckCircle2}
-            title="Transparan"
-            desc="Pantau status permohonan kapan saja hanya dengan kode tracking Anda."
-          />
+      <section id="bantuan" className="border-y border-white/10 bg-[#0B2545] px-6 py-10">
+        <div className="mx-auto flex max-w-7xl flex-col gap-5 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-start gap-4">
+            <div className="grid h-12 w-12 place-items-center rounded-xl bg-[#E8A83C] text-[#0B2545]">
+              <ShieldCheck size={22} />
+            </div>
+            <div>
+              <h2 className="text-xl font-black">Siap mengurus perubahan data manifes?</h2>
+              <p className="mt-1 text-sm text-blue-100">
+                Mulai permohonan baru atau cek status permohonan yang sudah diajukan.
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href="/permohonan"
+              className="inline-flex items-center gap-2 rounded-md bg-[#E8A83C] px-5 py-3 text-sm font-black text-[#0B2545] transition hover:bg-[#f3ba5c]"
+            >
+              Ajukan Permohonan
+              <ArrowRight size={16} />
+            </Link>
+            <Link
+              href="/status"
+              className="inline-flex items-center gap-2 rounded-md border border-white/20 px-5 py-3 text-sm font-bold text-white transition hover:bg-white/10"
+            >
+              <Search size={16} />
+              Cek Status
+            </Link>
+          </div>
         </div>
       </section>
 
-      {/* BOTTOM MENU STRIP */}
-      <section className="px-6 py-6 bg-[#0B2545]">
-        <div className="mx-auto max-w-6xl flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-sm font-semibold text-white/90">
-          {MENU_STRIP.map((item, i) => (
-            <span key={item} className="flex items-center gap-3">
-              {item}
-              {i < MENU_STRIP.length - 1 && (
-                <span className="text-[#E8A83C]">|</span>
-              )}
-            </span>
-          ))}
+      <footer className="bg-[#071525] px-6 py-6">
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 text-xs font-semibold text-blue-100 sm:flex-row sm:items-center sm:justify-between">
+          <p>BERIMAN - Sistem Perubahan Data Manifes Kepabeanan</p>
+          <div className="flex flex-wrap gap-4">
+            <Link href="/permohonan" className="hover:text-[#E8A83C]">Ajukan Permohonan</Link>
+            <Link href="/status" className="hover:text-[#E8A83C]">Cek Status</Link>
+            <Link href="/admin/login" className="hover:text-[#E8A83C]">Login Admin</Link>
+          </div>
         </div>
-      </section>
+      </footer>
     </main>
-  );
-}
-
-function FiturCard({
-  icon: Icon,
-  title,
-  desc,
-}: {
-  icon: typeof ShieldCheck;
-  title: string;
-  desc: string;
-}) {
-  return (
-    <div className="bg-white rounded-xl border border-slate-200 p-6">
-      <div className="h-10 w-10 rounded-lg bg-[#0B2545] grid place-items-center mb-4">
-        <Icon size={18} className="text-[#E8A83C]" />
-      </div>
-      <h3 className="font-display font-bold text-[#0B2545]">{title}</h3>
-      <p className="text-sm text-slate-500 mt-1.5">{desc}</p>
-    </div>
   );
 }

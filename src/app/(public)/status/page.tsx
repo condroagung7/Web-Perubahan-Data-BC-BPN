@@ -14,8 +14,8 @@ interface StatusData {
 const STATUS_LABEL: Record<string, { text: string; className: string }> = {
   pending: { text: "Menunggu Diproses", className: "bg-amber-100 text-amber-700" },
   diproses: { text: "Sedang Diproses", className: "bg-blue-100 text-blue-700" },
-  disetujui: { text: "Disetujui", className: "bg-green-100 text-green-700" },
-  ditolak: { text: "Ditolak", className: "bg-red-100 text-red-700" },
+  disetujui: { text: "Diterima Lengkap", className: "bg-green-100 text-green-700" },
+  ditolak: { text: "Kekurangan Dokumen", className: "bg-red-100 text-red-700" },
 };
 
 export default function StatusPage() {
@@ -48,10 +48,10 @@ export default function StatusPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-6 py-16">
-      <div className="max-w-md mx-auto bg-white rounded-xl border border-slate-200 p-8">
-        <h1 className="text-xl font-bold text-slate-900">Cek Status Permohonan</h1>
-        <p className="text-sm text-slate-600 mt-1">
+    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 px-6 py-16">
+      <div className="max-w-md mx-auto bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-8">
+        <h1 className="text-xl font-bold text-slate-900 dark:text-white">Cek Status Permohonan</h1>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
           Masukkan kode tracking yang Anda terima saat mengajukan permohonan.
         </p>
 
@@ -79,7 +79,7 @@ export default function StatusPage() {
         )}
 
         {data && (
-          <div className="mt-6 border-t border-slate-200 pt-4 space-y-2 text-sm">
+          <div className="mt-6 border-t border-slate-200 dark:border-slate-800 pt-4 space-y-2 text-sm">
             <Row label="Kode Tracking" value={data.kode_tracking} />
             <Row label="Nama Perusahaan" value={data.nama_perusahaan} />
             <Row label="Jenis Perubahan Data" value={data.jenis_perubahan_data} />
@@ -106,8 +106,8 @@ export default function StatusPage() {
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between gap-4">
-      <span className="text-slate-500">{label}</span>
-      <span className="text-slate-900 text-right">{value}</span>
+      <span className="text-slate-500 dark:text-slate-400">{label}</span>
+      <span className="text-slate-900 dark:text-slate-100 text-right">{value}</span>
     </div>
   );
 }

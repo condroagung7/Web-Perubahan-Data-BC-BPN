@@ -30,16 +30,16 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-slate-50 px-6">
-      <div className="max-w-sm w-full bg-white rounded-xl border border-slate-200 p-8">
-        <h1 className="text-xl font-bold text-slate-900">Login Admin</h1>
-        <p className="text-sm text-slate-600 mt-1">
+    <main className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 px-6">
+      <div className="max-w-sm w-full bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-8">
+        <h1 className="text-xl font-bold text-slate-900 dark:text-white">Login Admin</h1>
+        <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
           Khusus untuk petugas yang menangani permohonan perubahan data.
         </p>
 
         <form onSubmit={handleLogin} className="mt-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
               Email
             </label>
             <input
@@ -51,7 +51,7 @@ export default function AdminLoginPage() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
               Kata Sandi
             </label>
             <input

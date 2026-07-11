@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Tailwind v4 memakai CSS-first config: aktifkan strategi dark mode
+   berbasis class (.dark) supaya toggle manual bisa mengatur tema,
+   bukan hanya mengikuti preferensi sistem. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -12,11 +17,9 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
 }
 
 body {
@@ -29,6 +32,25 @@ h1, h2, h3, .font-display {
   font-family: var(--font-display), Arial, Helvetica, sans-serif;
 }
 
+/* Animasi pesawat terbang saat tombol "Ajukan Permohonan" diklik */
+.plane-wrap {
+  transition: transform 0.75s cubic-bezier(0.55, 0.06, 0.68, 0.19), opacity 0.75s ease-in;
+}
+
+/* Desktop & tablet: pesawat terbang dari kanan ke kiri */
+.plane-fly {
+  transform: translateX(-160%) rotate(0deg);
+  opacity: 0;
+}
+
+/* Mobile: pesawat menghadap atas, terbang dari bawah ke atas */
+@media (max-width: 767px) {
+  .plane-fly {
+    transform: translateY(-160%) rotate(90deg);
+    opacity: 0;
+  }
+}
+
 .input {
   width: 100%;
   border-radius: 0.5rem;
@@ -36,10 +58,22 @@ h1, h2, h3, .font-display {
   padding: 0.5rem 0.75rem;
   font-size: 0.875rem;
   outline: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, background-color 0.15s, color 0.15s;
+  background-color: #ffffff;
+  color: #0f172a;
 }
 
 .input:focus {
   border-color: #2563eb;
   box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+.dark .input {
+  background-color: #1e293b;
+  border-color: #334155;
+  color: #f1f5f9;
+}
+
+.dark .input::placeholder {
+  color: #64748b;
 }

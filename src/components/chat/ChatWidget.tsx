@@ -17,6 +17,15 @@ export default function ChatWidget() {
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    function openChat() {
+      setOpen(true);
+    }
+
+    window.addEventListener("open-ai-chat", openChat);
+    return () => window.removeEventListener("open-ai-chat", openChat);
+  }, []);
+
+  useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, open]);
 
@@ -54,36 +63,36 @@ export default function ChatWidget() {
   return (
     <div className="fixed bottom-5 right-5 z-50">
       {open && (
-        <div className="mb-3 w-80 sm:w-96 h-[28rem] bg-white rounded-xl border border-slate-200 shadow-xl flex flex-col overflow-hidden">
-          <div className="bg-blue-600 text-white px-4 py-3 flex items-center justify-between">
-            <span className="font-medium text-sm">Asisten Virtual</span>
+        <div className="mb-3 flex h-112 w-80 flex-col overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl dark:border-slate-800 dark:bg-slate-900 sm:w-96">
+          <div className="flex items-center justify-between bg-blue-600 px-4 py-3 text-white">
+            <span className="text-sm font-medium">Asisten Virtual</span>
             <button onClick={() => setOpen(false)} aria-label="Tutup chat">
               <X size={18} />
             </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
+          <div className="flex-1 space-y-2 overflow-y-auto px-3 py-3">
             {messages.map((m, i) => (
               <div
                 key={i}
                 className={`max-w-[85%] rounded-lg px-3 py-2 text-sm ${
                   m.role === "user"
-                    ? "bg-blue-600 text-white ml-auto"
-                    : "bg-slate-100 text-slate-800"
+                    ? "ml-auto bg-blue-600 text-white"
+                    : "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200"
                 }`}
               >
                 {m.text}
               </div>
             ))}
             {loading && (
-              <div className="bg-slate-100 text-slate-500 text-sm rounded-lg px-3 py-2 w-fit">
+              <div className="w-fit rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                 Mengetik...
               </div>
             )}
             <div ref={bottomRef} />
           </div>
 
-          <div className="border-t border-slate-200 p-2 flex gap-2">
+          <div className="flex gap-2 border-t border-slate-200 p-2 dark:border-slate-800">
             <input
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -94,7 +103,7 @@ export default function ChatWidget() {
             <button
               onClick={sendMessage}
               disabled={loading}
-              className="bg-blue-600 text-white rounded-lg px-3 hover:bg-blue-700 disabled:opacity-60"
+              className="rounded-lg bg-blue-600 px-3 text-white hover:bg-blue-700 disabled:opacity-60"
               aria-label="Kirim"
             >
               <Send size={16} />
@@ -105,7 +114,7 @@ export default function ChatWidget() {
 
       <button
         onClick={() => setOpen((v) => !v)}
-        className="bg-blue-600 text-white rounded-full p-4 shadow-lg hover:bg-blue-700 transition"
+        className="rounded-full bg-blue-600 p-4 text-white shadow-lg transition hover:bg-blue-700"
         aria-label="Buka chat"
       >
         {open ? <X size={22} /> : <MessageCircle size={22} />}

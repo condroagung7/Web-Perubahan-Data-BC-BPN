@@ -8,11 +8,40 @@ import {
   permohonanSchema,
   type PermohonanFormData,
 } from "@/lib/validations/permohonan";
-import LogoUpload from "@/components/forms/LogoUpload";
+import SearchableCombobox from "@/components/forms/SearchableCombobox";
+import DocumentChecklistUpload, {
+  type DokumenPendukung,
+} from "@/components/forms/DocumentChecklistUpload";
 
 const JENIS_PERUBAHAN_DATA = ["RKSP", "INWARD", "OUTWARD"] as const;
 const PIHAK_PENGAJU = ["NVOCC", "Operator Sarana Pengangkut"] as const;
+const PERUBAHAN_DATA_TERHADAP = ["Pos/Barang", "Sarana Pengangkut"] as const;
 const OPSI_JUMLAH_BARIS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+
+const OPSI_DATA_YANG_DIRUBAH = [
+  "Nama Consignee",
+  "Nama Shipper",
+  "Alamat Consignee",
+  "Alamat Shipper",
+  "NPWP",
+  "Jumlah Kemasan",
+  "Berat Brutto",
+  "Jenis Pos",
+  "Kelompok Pos",
+  "Nomor BL/AWB",
+  "Tanggal BL/AWB",
+  "Pelabuhan Asal",
+  "Pelabuhan Tujuan",
+  "Pelabuhan Bongkar",
+  "Pelabuhan Transit",
+  "Waktu Tiba",
+  "Waktu Muat",
+  "Waktu Bongkar",
+  "Uraian Barang",
+  "Nomor Voyage / Flight",
+  "Tambah Pos Inward",
+  "Pembatalan RKSP",
+];
 
 export default function FormPermohonanPage() {
   const [submitting, setSubmitting] = useState(false);
@@ -24,16 +53,29 @@ export default function FormPermohonanPage() {
     register,
     handleSubmit,
     control,
+    watch,
     setValue,
     formState: { errors },
     reset,
   } = useForm<PermohonanFormData>({
     resolver: zodResolver(permohonanSchema),
     defaultValues: {
+      alasan_perubahan: undefined, 
+      nomor_pos: "",
+      nama_sarana_pengangkut: "",
+      nomor_bl_awb: "",
+      tanggal_bl_awb: "",
+      jumlah_kemasan: "",
+      berat_kotor: "",
+      uraian_barang: "",
+      nama_shipper: "",
+      nama_consignee: "",
       detail_perubahan: [{ data_yang_dirubah: "", data_semula: "", data_seharusnya: "" }],
-      logo_perusahaan_url: null,
+      dokumen_pendukung: [],
     },
   });
+  const perubahanDataTerhadap = watch("alasan_perubahan");
+  const tampilkanDataManifesSebelum = perubahanDataTerhadap === "Pos/Barang";
 
   const { fields, append, remove } = useFieldArray({
     control,
@@ -82,12 +124,12 @@ export default function FormPermohonanPage() {
 
   if (hasil) {
     return (
-      <main className="min-h-screen flex items-center justify-center bg-slate-50 px-6">
-        <div className="max-w-md w-full bg-white rounded-xl border border-slate-200 p-8 text-center">
-          <h1 className="text-xl font-bold text-slate-900">
+      <main className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-950 px-6">
+        <div className="max-w-md w-full bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-8 text-center">
+          <h1 className="text-xl font-bold text-slate-900 dark:text-white">
             Permohonan Berhasil Diajukan
           </h1>
-          <p className="mt-2 text-slate-600">Simpan kode tracking berikut untuk memantau status:</p>
+          <p className="mt-2 text-slate-600 dark:text-slate-400">Simpan kode tracking berikut untuk memantau status:</p>
           <p className="mt-4 text-2xl font-mono font-bold text-blue-600">
             {hasil.kode_tracking}
           </p>
@@ -100,54 +142,37 @@ export default function FormPermohonanPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 px-6 py-16">
-      <div className="max-w-3xl mx-auto bg-white rounded-xl border border-slate-200 p-8">
-        <h1 className="text-2xl font-bold text-slate-900">
+    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 px-6 py-16">
+      <div className="max-w-3xl mx-auto bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-8">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
           Formulir Permohonan Perubahan Data BC 1.1
         </h1>
-        <p className="text-slate-600 mt-1 text-sm">
+        <p className="text-slate-600 dark:text-slate-400 mt-1 text-sm">
           Isi data di bawah ini dengan benar. Permohonan akan diteruskan ke admin untuk ditinjau.
         </p>
 
         <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-6">
           {/* Data Perusahaan */}
           <fieldset className="space-y-4">
-            <legend className="font-semibold text-slate-800 text-sm">Data Perusahaan</legend>
-
-            <Field label="Logo Perusahaan">
-              <Controller
-                control={control}
-                name="logo_perusahaan_url"
-                render={() => (
-                  <LogoUpload
-                    onUploaded={(url) => setValue("logo_perusahaan_url", url)}
-                  />
-                )}
-              />
-            </Field>
+            <legend className="font-semibold text-slate-800 dark:text-slate-200 text-sm">Data Perusahaan</legend>
 
             <div className="grid grid-cols-2 gap-4">
               <Field label="Nama Perusahaan" error={errors.nama_perusahaan?.message}>
                 <input {...register("nama_perusahaan")} className="input" />
               </Field>
-              <Field label="Kota" error={errors.kota?.message}>
-                <input {...register("kota")} className="input" />
-              </Field>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
               <Field label="Email Perusahaan" error={errors.email_perusahaan?.message}>
                 <input {...register("email_perusahaan")} type="email" className="input" />
               </Field>
-              <Field label="Alamat Perusahaan" error={errors.alamat_perusahaan?.message}>
-                <input {...register("alamat_perusahaan")} className="input" />
-              </Field>
             </div>
+
+            <Field label="Alamat Perusahaan" error={errors.alamat_perusahaan?.message}>
+              <input {...register("alamat_perusahaan")} className="input" />
+            </Field>
           </fieldset>
 
           {/* Data Surat */}
-          <fieldset className="space-y-4 border-t border-slate-100 pt-6">
-            <legend className="font-semibold text-slate-800 text-sm">Data Surat Permohonan</legend>
+          <fieldset className="space-y-4 border-t border-slate-100 dark:border-slate-800 pt-6">
+            <legend className="font-semibold text-slate-800 dark:text-slate-200 text-sm">Data Surat Permohonan</legend>
 
             <div className="grid grid-cols-2 gap-4">
               <Field label="Nomor Surat Permohonan" error={errors.nomor_surat_permohonan?.message}>
@@ -189,20 +214,76 @@ export default function FormPermohonanPage() {
                 <input
                   {...register("nomor_pendaftaran_bc11")}
                   className="input"
-                  placeholder="001234 tanggal 1 Januari 2026 Pos 0001"
+                  placeholder="001234 tanggal 1 Januari 2026"
                 />
               </Field>
             </div>
 
-            <Field label="Alasan Melakukan Perubahan Data" error={errors.alasan_perubahan?.message}>
-              <textarea {...register("alasan_perubahan")} className="input" rows={3} />
+            <Field label="Perubahan Data Terhadap" error={errors.alasan_perubahan?.message}>
+              <select {...register("alasan_perubahan")} className="input">
+                <option value="">Pilih perubahan data terhadap</option>
+                {PERUBAHAN_DATA_TERHADAP.map((opsi) => (
+                  <option key={opsi} value={opsi}>
+                    {opsi}
+                  </option>
+                ))}
+              </select>
             </Field>
           </fieldset>
 
+          {/* Data Manifes Sebelum Perubahan */}
+          {tampilkanDataManifesSebelum && (
+          <fieldset className="space-y-4 border-t border-slate-100 dark:border-slate-800 pt-6">
+            <legend className="font-semibold text-slate-800 dark:text-slate-200 text-sm">
+              Data Manifes Sebelum Perubahan
+            </legend>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Nomor Pos" error={errors.nomor_pos?.message}>
+                <input {...register("nomor_pos")} className="input" />
+              </Field>
+              <Field label="Nama Sarana Pengangkut" error={errors.nama_sarana_pengangkut?.message}>
+                <input {...register("nama_sarana_pengangkut")} className="input" />
+              </Field>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Nomor BL/AWB" error={errors.nomor_bl_awb?.message}>
+                <input {...register("nomor_bl_awb")} className="input" />
+              </Field>
+              <Field label="Tanggal BL/AWB" error={errors.tanggal_bl_awb?.message}>
+                <input {...register("tanggal_bl_awb")} type="date" className="input" />
+              </Field>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Jumlah Kemasan" error={errors.jumlah_kemasan?.message}>
+                <input {...register("jumlah_kemasan")} className="input" placeholder="Contoh: 120 PK" />
+              </Field>
+              <Field label="Berat Kotor" error={errors.berat_kotor?.message}>
+                <input {...register("berat_kotor")} className="input" placeholder="Contoh: 3500 Kg" />
+              </Field>
+            </div>
+
+            <Field label="Uraian Barang" error={errors.uraian_barang?.message}>
+              <textarea {...register("uraian_barang")} className="input" rows={2} />
+            </Field>
+
+            <div className="grid grid-cols-2 gap-4">
+              <Field label="Nama Shipper" error={errors.nama_shipper?.message}>
+                <input {...register("nama_shipper")} className="input" />
+              </Field>
+              <Field label="Nama Consignee" error={errors.nama_consignee?.message}>
+                <input {...register("nama_consignee")} className="input" />
+              </Field>
+            </div>
+          </fieldset>
+          )}
+
           {/* Tabel Detail Perubahan */}
-          <fieldset className="space-y-3 border-t border-slate-100 pt-6">
+          <fieldset className="space-y-3 border-t border-slate-100 dark:border-slate-800 pt-6">
             <div className="flex items-center justify-between">
-              <legend className="font-semibold text-slate-800 text-sm">
+              <legend className="font-semibold text-slate-800 dark:text-slate-200 text-sm">
                 Detail Perubahan Data
               </legend>
               <div className="flex items-center gap-2">
@@ -210,7 +291,7 @@ export default function FormPermohonanPage() {
                 <select
                   value={jumlahBaris}
                   onChange={(e) => handleJumlahBarisChange(Number(e.target.value))}
-                  className="input !w-auto text-xs py-1"
+                  className="input w-auto! text-xs py-1"
                 >
                   {OPSI_JUMLAH_BARIS.map((n) => (
                     <option key={n} value={n}>{n}</option>
@@ -223,30 +304,37 @@ export default function FormPermohonanPage() {
               <p className="text-xs text-red-600">{errors.detail_perubahan.message}</p>
             )}
 
-            <div className="overflow-x-auto border border-slate-200 rounded-lg">
+            <div className="overflow-x-auto border border-slate-200 dark:border-slate-800 rounded-lg">
               <table className="w-full text-sm">
-                <thead className="bg-slate-50">
+                <thead className="bg-slate-50 dark:bg-slate-800">
                   <tr>
-                    <th className="px-3 py-2 text-left font-medium text-slate-600 w-1/4">
+                    <th className="px-3 py-2 text-left font-medium text-slate-600 dark:text-slate-300 w-1/4">
                       Data yang Dirubah
                     </th>
-                    <th className="px-3 py-2 text-left font-medium text-slate-600">
+                    <th className="px-3 py-2 text-left font-medium text-slate-600 dark:text-slate-300">
                       Data Semula
                     </th>
-                    <th className="px-3 py-2 text-left font-medium text-slate-600">
+                    <th className="px-3 py-2 text-left font-medium text-slate-600 dark:text-slate-300">
                       Data Seharusnya
                     </th>
                     <th className="w-10" />
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                   {fields.map((field, index) => (
                     <tr key={field.id}>
-                      <td className="p-2 align-top">
-                        <input
-                          {...register(`detail_perubahan.${index}.data_yang_dirubah`)}
-                          className="input"
-                          placeholder="Contoh: Nama Consignee"
+                      <td className="p-2 align-top min-w-45">
+                        <Controller
+                          control={control}
+                          name={`detail_perubahan.${index}.data_yang_dirubah`}
+                          render={({ field }) => (
+                            <SearchableCombobox
+                              value={field.value}
+                              onChange={field.onChange}
+                              options={OPSI_DATA_YANG_DIRUBAH}
+                              placeholder="Pilih data yang dirubah"
+                            />
+                          )}
                         />
                         {errors.detail_perubahan?.[index]?.data_yang_dirubah && (
                           <p className="text-xs text-red-600 mt-0.5">
@@ -299,18 +387,13 @@ export default function FormPermohonanPage() {
             </button>
           </fieldset>
 
-          {/* Penandatangan */}
-          <fieldset className="space-y-4 border-t border-slate-100 pt-6">
-            <legend className="font-semibold text-slate-800 text-sm">Penandatangan</legend>
-            <div className="grid grid-cols-2 gap-4">
-              <Field label="Nama Penandatangan" error={errors.nama_penandatangan?.message}>
-                <input {...register("nama_penandatangan")} className="input" />
-              </Field>
-              <Field label="Jabatan Penandatangan" error={errors.jabatan_penandatangan?.message}>
-                <input {...register("jabatan_penandatangan")} className="input" />
-              </Field>
-            </div>
-          </fieldset>
+          {/* Upload Dokumen Pendukung — otomatis menyesuaikan data yang dirubah */}
+          <DocumentChecklistUpload
+            dataYangDirubahList={(watch("detail_perubahan") ?? [])
+              .map((d) => d.data_yang_dirubah)
+              .filter(Boolean)}
+            onChange={(dokumen: DokumenPendukung[]) => setValue("dokumen_pendukung", dokumen)}
+          />
 
           {errorMsg && (
             <p className="text-sm text-red-600 bg-red-50 rounded-md px-3 py-2">{errorMsg}</p>
@@ -340,7 +423,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-slate-700 mb-1">{label}</label>
+      <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">{label}</label>
       {children}
       {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
     </div>
