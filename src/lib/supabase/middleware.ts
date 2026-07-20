@@ -16,11 +16,18 @@ function isAdminEmail(email?: string | null) {
 }
 
 /**
- * Add security headers to all responses
+ * Add security headers to responses
  */
-function addSecurityHeaders(response: NextResponse): NextResponse {
-  // Prevent clickjacking
-  response.headers.set("X-Frame-Options", "DENY");
+function addSecurityHeaders(
+  response: NextResponse,
+  pathname?: string
+): NextResponse {
+  const isPdfPreviewRoute = pathname === "/api/admin/dokumen-file";
+
+  // Prevent clickjacking, except for same-origin PDF preview route
+  if (!isPdfPreviewRoute) {
+    response.headers.set("X-Frame-Options", "DENY");
+  }
 
   // Prevent MIME type sniffing
   response.headers.set("X-Content-Type-Options", "nosniff");
@@ -84,35 +91,37 @@ export async function updateSession(request: NextRequest) {
   if (isAdminRoute && !isLoginRoute && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/admin/login";
-    return addSecurityHeaders(NextResponse.redirect(url));
+    return addSecurityHeaders(NextResponse.redirect(url), pathname);
   }
 
   if (isAdminRoute && !isLoginRoute && user && !isAdminEmail(user.email)) {
     const url = request.nextUrl.clone();
     url.pathname = "/admin/login";
     url.searchParams.set("error", "unauthorized");
-    return addSecurityHeaders(NextResponse.redirect(url));
+    return addSecurityHeaders(NextResponse.redirect(url), pathname);
   }
 
   if (isLoginRoute && user && isAdminEmail(user.email)) {
     const url = request.nextUrl.clone();
     url.pathname = "/admin/dashboard";
-    return addSecurityHeaders(NextResponse.redirect(url));
+    return addSecurityHeaders(NextResponse.redirect(url), pathname);
   }
 
   // Protect admin API routes at middleware level
   if (isAdminApiRoute) {
     if (!user) {
       return addSecurityHeaders(
-        NextResponse.json({ error: "Tidak diizinkan" }, { status: 401 })
+        NextResponse.json({ error: "Tidak diizinkan" }, { status: 401 }),
+        pathname
       );
     }
     if (!isAdminEmail(user.email)) {
       return addSecurityHeaders(
-        NextResponse.json({ error: "Akses ditolak" }, { status: 403 })
+        NextResponse.json({ error: "Akses ditolak" }, { status: 403 }),
+        pathname
       );
     }
   }
 
-  return addSecurityHeaders(supabaseResponse);
+  return addSecurityHeaders(supabaseResponse, pathname);
 }
