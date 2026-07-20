@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-const securityHeaders = [
+const baseSecurityHeaders = [
   {
     key: "X-DNS-Prefetch-Control",
     value: "on",
@@ -8,10 +8,6 @@ const securityHeaders = [
   {
     key: "Strict-Transport-Security",
     value: "max-age=63072000; includeSubDomains; preload",
-  },
-  {
-    key: "X-Frame-Options",
-    value: "SAMEORIGIN",
   },
   {
     key: "X-Content-Type-Options",
@@ -30,6 +26,14 @@ const securityHeaders = [
     value:
       "camera=(), microphone=(), geolocation=(), browsing-topics=()",
   },
+];
+
+const appSecurityHeaders = [
+  ...baseSecurityHeaders,
+  {
+    key: "X-Frame-Options",
+    value: "SAMEORIGIN",
+  },
   {
     key: "Content-Security-Policy",
     value: [
@@ -47,11 +51,29 @@ const securityHeaders = [
   },
 ];
 
+const pdfPreviewHeaders = [
+  ...baseSecurityHeaders,
+  {
+    key: "Content-Security-Policy",
+    value: [
+      "default-src 'self'",
+      "frame-ancestors 'self'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "upgrade-insecure-requests",
+    ].join("; "),
+  },
+];
+
 const nextConfig: NextConfig = {
   headers: async () => [
     {
+      source: "/api/admin/dokumen-file",
+      headers: pdfPreviewHeaders,
+    },
+    {
       source: "/(.*)",
-      headers: securityHeaders,
+      headers: appSecurityHeaders,
     },
   ],
 };
