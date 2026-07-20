@@ -43,7 +43,7 @@ const appSecurityHeaders = [
       "img-src 'self' data: blob: https:",
       "font-src 'self' data:",
       "connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://api.groq.com https://api.resend.com",
-      "frame-ancestors 'none'",
+      "frame-ancestors *",
       "base-uri 'self'",
       "form-action 'self'",
       "upgrade-insecure-requests",
@@ -57,7 +57,7 @@ const pdfPreviewHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "frame-ancestors 'self'",
+      "frame-ancestors *",
       "base-uri 'self'",
       "form-action 'self'",
       "upgrade-insecure-requests",

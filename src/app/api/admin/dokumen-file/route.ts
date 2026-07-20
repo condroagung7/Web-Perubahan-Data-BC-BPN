@@ -76,15 +76,17 @@ export const GET = secureHandler(
     const contentType = data.type || "application/pdf";
     const fileName = dokumen.nama_file || "dokumen.pdf";
 
-    return new NextResponse(arrayBuffer, {
-      status: 200,
-      headers: {
-        "Content-Type": contentType,
-        "Content-Disposition": `inline; filename="${encodeURIComponent(fileName)}"`,
-        "Cache-Control": "private, no-store, max-age=0",
-        "X-Content-Type-Options": "nosniff",
-      },
-    });
+return new NextResponse(arrayBuffer, {
+  status: 200,
+  headers: {
+    "Content-Type": contentType,
+    "Content-Disposition": `inline; filename="${encodeURIComponent(fileName)}"`,
+    "Cache-Control": "private, no-store, max-age=0",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "ALLOWALL",
+    "Content-Security-Policy": "frame-ancestors *;",
+  },
+});
   },
   {
     rateLimit: RATE_LIMIT_ADMIN,
