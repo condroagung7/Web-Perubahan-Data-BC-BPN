@@ -25,12 +25,9 @@ export default function SearchableCombobox({
     value !== "" && !options.includes(value)
   );
   const [coords, setCoords] = useState({ top: 0, left: 0, width: 0 });
-  const [mounted, setMounted] = useState(false);
 
   const buttonRef = useRef<HTMLButtonElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -132,7 +129,7 @@ export default function SearchableCombobox({
         <ChevronDown size={14} className="text-slate-400 shrink-0" />
       </button>
 
-      {mounted &&
+      {typeof document !== "undefined" &&
         open &&
         createPortal(
           <div

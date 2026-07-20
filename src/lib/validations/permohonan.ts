@@ -1,12 +1,5 @@
 import { z } from "zod";
 
-const perubahanDataTerhadapSchema = z
-  .string()
-  .min(1, "Pilih perubahan data terhadap")
-  .refine((value) => value === "Pos/Barang" || value === "Sarana Pengangkut", {
-    message: "Pilih perubahan data terhadap",
-  });
-
 export const detailPerubahanSchema = z.object({
   data_yang_dirubah: z.string().min(1, "Wajib diisi").max(200),
   data_semula: z.string().min(1, "Wajib diisi").max(500),

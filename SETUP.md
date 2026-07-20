@@ -51,9 +51,11 @@ middleware.ts                      # Proteksi route /admin
 
 > Catatan: Resend mensyaratkan domain pengirim terverifikasi untuk kirim ke alamat selain milik akun sendiri. Untuk uji coba awal, gunakan domain sandbox Resend lalu ganti ke domain resmi sebelum production.
 
-### 3. Setup Gemini API
-1. Buat API Key di [Google AI Studio](https://aistudio.google.com/apikey).
-2. Masukkan ke `GEMINI_API_KEY`.
+### 3. Setup AI API
+1. Buat API Key provider AI yang digunakan aplikasi.
+2. Masukkan ke `GROQ_API_KEY`.
+
+> Catatan: kode aplikasi saat ini memakai `GROQ_API_KEY` pada endpoint `/api/chat`, jadi jangan gunakan nama env lama `GEMINI_API_KEY` saat deploy.
 
 ### 4. Konfigurasi Environment
 ```bash
@@ -79,17 +81,45 @@ Buka `http://localhost:3000`.
 
 1. Push project ini ke repository GitHub.
 2. Buka [vercel.com](https://vercel.com) → **New Project** → import repo tersebut.
-3. Saat konfigurasi, masukkan semua environment variables yang sama seperti `.env.local` (Settings → Environment Variables):
+3. Saat konfigurasi, masukkan environment variables berikut di **Settings → Environment Variables**:
+
+   ### Wajib
    - `NEXT_PUBLIC_SUPABASE_URL`
    - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
    - `SUPABASE_SERVICE_ROLE_KEY`
    - `RESEND_API_KEY`
    - `EMAIL_FROM`
    - `EMAIL_TUJUAN_INSTANSI`
-   - `GEMINI_API_KEY`
-   - `NEXT_PUBLIC_APP_URL` (isi dengan URL Vercel setelah deploy pertama, lalu redeploy)
-4. Klik **Deploy**.
-5. Setelah live, buka Supabase **Authentication > URL Configuration** dan tambahkan domain Vercel ke **Redirect URLs** supaya login admin berjalan normal.
+   - `ADMIN_EMAILS`
+   - `GROQ_API_KEY`
+   - `NEXT_PUBLIC_APP_URL`
+   - `CRON_SECRET`
+
+   ### Opsional / fallback
+   - `SUPABASE_URL`
+   - `SUPABASE_ANON_KEY`
+   - `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
+   - `VERCEL_URL`
+   - `SUPABASE_STORAGE_LIMIT_MB` (default `1024`)
+
+4. Nilai penting yang harus diperhatikan:
+   - `ADMIN_EMAILS` berisi daftar email admin dipisahkan koma.
+   - `NEXT_PUBLIC_APP_URL` harus diisi full URL production, misalnya `https://nama-project.vercel.app`.
+   - `CRON_SECRET` wajib diisi agar endpoint cron cleanup tidak bisa dipanggil sembarang pihak.
+   - `EMAIL_FROM` harus memakai sender/domain yang valid di Resend.
+   - `SUPABASE_SERVICE_ROLE_KEY` hanya disimpan di server-side env, jangan pernah dipublikasikan.
+
+5. Klik **Deploy**.
+6. Setelah live, buka Supabase **Authentication > URL Configuration** lalu tambahkan:
+   - domain Vercel ke **Site URL**
+   - URL login/callback yang diperlukan ke **Redirect URLs**
+7. Pastikan Vercel Cron aktif untuk path `/api/admin/cleanup-expired-permohonan` sesuai `vercel.json`.
+8. Setiap perubahan ke branch `main` / `master` atau pull request akan menjalankan GitHub Actions CI dari file `.github/workflows/ci.yml` untuk:
+   - install dependency
+   - lint
+   - production build
+
+   CI ini membantu memastikan deploy ke Vercel tidak gagal karena error TypeScript, lint, atau build.
 
 ## Pengembangan Lanjutan (opsional)
 - Tambah upload dokumen pendukung ke bucket `dokumen-permohonan` dari form publik.

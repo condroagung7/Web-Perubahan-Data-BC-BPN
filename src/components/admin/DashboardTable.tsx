@@ -22,13 +22,6 @@ import type {
   StatusSeksi,
 } from "@/types/database";
 
-const STATUS_LABEL: Record<StatusPermohonan, { text: string; className: string }> = {
-  pending: { text: "Menunggu", className: "bg-amber-100 text-amber-700" },
-  diproses: { text: "Diproses", className: "bg-blue-100 text-blue-700" },
-  disetujui: { text: "Menunggu Disposisi", className: "bg-amber-100 text-amber-700" },
-  ditolak: { text: "Kekurangan Dokumen", className: "bg-red-100 text-red-700" },
-};
-
 const STATUS_SEKSI_LABEL: Record<StatusSeksi, string> = {
   konfirmasi_seksi_terkait: "Konfirmasi Seksi Terkait",
   proses: "Proses",
@@ -160,7 +153,7 @@ export default function DashboardTable({
   const [zoom, setZoom] = useState(1);
   const [deletingBerkasId, setDeletingBerkasId] = useState<string | null>(null);
   const [storageUsage, setStorageUsage] = useState<StorageUsage | null>(null);
-  const [storageLoading, setStorageLoading] = useState(true);
+  const [storageLoading, setStorageLoading] = useState(false);
   const [storageError, setStorageError] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Permohonan | null>(null);
   const [picTarget, setPicTarget] = useState<Permohonan | null>(null);
@@ -190,7 +183,9 @@ export default function DashboardTable({
   }
 
   useEffect(() => {
-    loadStorageUsage();
+    void (async () => {
+      await loadStorageUsage();
+    })();
   }, []);
 
   function updatePermohonan(id: string, updater: (permohonan: Permohonan) => Permohonan) {

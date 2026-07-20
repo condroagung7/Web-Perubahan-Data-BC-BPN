@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { ChatMessage } from "@/types/database";
+import { secureHandler } from "@/lib/security/api-handler";
+import { RATE_LIMIT_CHAT } from "@/lib/security/rate-limit";
+import { sanitizeString } from "@/lib/security/sanitize";
 
 const SYSTEM_PROMPT = `
 Kamu adalah asisten virtual untuk layanan "Permohonan Perubahan Data" di Kantor Bea Cukai Balikpapan.
@@ -15,20 +18,53 @@ Jawab singkat, jelas, sopan, dan dalam Bahasa Indonesia. Jika ditanya hal di lua
 arahkan kembali pengguna untuk menghubungi kantor terkait secara langsung.
 `.trim();
 
-export async function POST(request: NextRequest) {
-  try {
+const MAX_MESSAGES = 50;
+const MAX_MESSAGE_LENGTH = 2000;
+
+export const POST = secureHandler(
+  async (request: NextRequest) => {
     const { messages }: { messages: ChatMessage[] } = await request.json();
 
-    if (!messages || messages.length === 0) {
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return NextResponse.json({ error: "Pesan kosong" }, { status: 400 });
     }
 
-    // Format pesan ke bentuk OpenAI-compatible yang dipakai Groq
+    // Limit number of messages to prevent abuse
+    if (messages.length > MAX_MESSAGES) {
+      return NextResponse.json(
+        { error: "Terlalu banyak pesan dalam satu sesi" },
+        { status: 400 }
+      );
+    }
+
+    // Validate and sanitize each message
+    for (const msg of messages) {
+      if (!msg.role || !msg.text || typeof msg.text !== "string") {
+        return NextResponse.json(
+          { error: "Format pesan tidak valid" },
+          { status: 400 }
+        );
+      }
+      if (!["user", "model"].includes(msg.role)) {
+        return NextResponse.json(
+          { error: "Role pesan tidak valid" },
+          { status: 400 }
+        );
+      }
+      if (msg.text.length > MAX_MESSAGE_LENGTH) {
+        return NextResponse.json(
+          { error: "Pesan terlalu panjang" },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Sanitize message content
     const groqMessages = [
       { role: "system", content: SYSTEM_PROMPT },
       ...messages.map((m) => ({
-        role: m.role === "model" ? "assistant" : "user",
-        content: m.text,
+        role: m.role === "model" ? ("assistant" as const) : ("user" as const),
+        content: sanitizeString(m.text).substring(0, MAX_MESSAGE_LENGTH),
       })),
     ];
 
@@ -56,14 +92,14 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await res.json();
-    const text = data.choices?.[0]?.message?.content ?? "Maaf, tidak ada respons.";
+    const text =
+      data.choices?.[0]?.message?.content ?? "Maaf, tidak ada respons.";
 
     return NextResponse.json({ reply: text });
-  } catch (err) {
-    console.error("Chat error:", err);
-    return NextResponse.json(
-      { error: "Gagal mendapatkan respons dari asisten" },
-      { status: 500 }
-    );
+  },
+  {
+    rateLimit: RATE_LIMIT_CHAT,
+    csrf: true,
+    maxBodySize: 256_000, // 256KB max for chat
   }
-}
+);

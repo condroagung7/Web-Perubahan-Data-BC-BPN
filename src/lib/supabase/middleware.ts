@@ -15,6 +15,42 @@ function isAdminEmail(email?: string | null) {
   return Boolean(email && adminEmails.includes(email.toLowerCase()));
 }
 
+/**
+ * Add security headers to all responses
+ */
+function addSecurityHeaders(response: NextResponse): NextResponse {
+  // Prevent clickjacking
+  response.headers.set("X-Frame-Options", "DENY");
+
+  // Prevent MIME type sniffing
+  response.headers.set("X-Content-Type-Options", "nosniff");
+
+  // Referrer policy - don't leak URLs to third parties
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+
+  // Permissions Policy - disable unnecessary browser features
+  response.headers.set(
+    "Permissions-Policy",
+    "camera=(), microphone=(), geolocation=(), interest-cohort=()"
+  );
+
+  // X-XSS-Protection (legacy browsers)
+  response.headers.set("X-XSS-Protection", "1; mode=block");
+
+  // Prevent caching of sensitive pages
+  const url = response.headers.get("x-middleware-rewrite") || "";
+  if (url.includes("/admin") || url.includes("/api/")) {
+    response.headers.set(
+      "Cache-Control",
+      "no-store, no-cache, must-revalidate, proxy-revalidate"
+    );
+    response.headers.set("Pragma", "no-cache");
+    response.headers.set("Expires", "0");
+  }
+
+  return response;
+}
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -24,7 +60,9 @@ export async function updateSession(request: NextRequest) {
         return request.cookies.getAll();
       },
       setAll(cookiesToSet) {
-        cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value));
+        cookiesToSet.forEach(({ name, value }) =>
+          request.cookies.set(name, value)
+        );
         supabaseResponse = NextResponse.next({ request });
         cookiesToSet.forEach(({ name, value, options }) =>
           supabaseResponse.cookies.set(name, value, options)
@@ -37,27 +75,44 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isAdminRoute = request.nextUrl.pathname.startsWith("/admin");
-  const isLoginRoute = request.nextUrl.pathname.startsWith("/admin/login");
+  const pathname = request.nextUrl.pathname;
+  const isAdminRoute = pathname.startsWith("/admin");
+  const isLoginRoute = pathname.startsWith("/admin/login");
+  const isAdminApiRoute = pathname.startsWith("/api/admin");
 
+  // Protect admin page routes
   if (isAdminRoute && !isLoginRoute && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/admin/login";
-    return NextResponse.redirect(url);
+    return addSecurityHeaders(NextResponse.redirect(url));
   }
 
   if (isAdminRoute && !isLoginRoute && user && !isAdminEmail(user.email)) {
     const url = request.nextUrl.clone();
     url.pathname = "/admin/login";
     url.searchParams.set("error", "unauthorized");
-    return NextResponse.redirect(url);
+    return addSecurityHeaders(NextResponse.redirect(url));
   }
 
   if (isLoginRoute && user && isAdminEmail(user.email)) {
     const url = request.nextUrl.clone();
     url.pathname = "/admin/dashboard";
-    return NextResponse.redirect(url);
+    return addSecurityHeaders(NextResponse.redirect(url));
   }
 
-  return supabaseResponse;
+  // Protect admin API routes at middleware level
+  if (isAdminApiRoute) {
+    if (!user) {
+      return addSecurityHeaders(
+        NextResponse.json({ error: "Tidak diizinkan" }, { status: 401 })
+      );
+    }
+    if (!isAdminEmail(user.email)) {
+      return addSecurityHeaders(
+        NextResponse.json({ error: "Akses ditolak" }, { status: 403 })
+      );
+    }
+  }
+
+  return addSecurityHeaders(supabaseResponse);
 }

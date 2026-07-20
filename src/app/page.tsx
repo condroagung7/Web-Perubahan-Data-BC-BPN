@@ -3,10 +3,8 @@ import Link from "next/link";
 import {
   ArrowRight,
   Bot,
-  CheckCircle2,
   Clock3,
   Eye,
-  FileText,
   Lock,
   LogIn,
   Search,

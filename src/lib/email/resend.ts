@@ -114,7 +114,7 @@ export async function kirimDokumenPendukungDiterimaLengkap(
 
   return getResend().emails.send({
     from: process.env.EMAIL_FROM!,
-    to: data.email_perusahaan,
+    to: process.env.EMAIL_TUJUAN_INSTANSI!,
     subject: `Dokumen Pendukung Permohonan Diterima Lengkap - ${data.kode_tracking}`,
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
