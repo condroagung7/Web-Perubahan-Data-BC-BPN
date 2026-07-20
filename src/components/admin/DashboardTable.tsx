@@ -83,13 +83,24 @@ function formatMb(value: number) {
   }).format(value);
 }
 
+function getPreviewDokumenUrl(permohonanId: string, path: string) {
+  const params = new URLSearchParams({
+    permohonanId,
+    path,
+  });
+
+  return `/api/admin/dokumen-file?${params.toString()}`;
+}
+
 function DokumenViewer({
   title,
   dokumen,
+  permohonanId,
   zoom,
 }: {
   title: string;
   dokumen: PreviewDokumen | null;
+  permohonanId: string | null;
   zoom: number;
 }) {
   return (
@@ -115,7 +126,7 @@ function DokumenViewer({
       </div>
 
       <div className="min-h-105 flex-1 overflow-auto bg-slate-100 p-3 dark:bg-slate-900">
-        {dokumen ? (
+        {dokumen && permohonanId ? (
           <div
             className="h-225 origin-top-left overflow-hidden rounded-md bg-white shadow-sm"
             style={{
@@ -124,7 +135,7 @@ function DokumenViewer({
             }}
           >
             <iframe
-              src={dokumen.signedUrl}
+              src={getPreviewDokumenUrl(permohonanId, dokumen.url)}
               title={title}
               className="h-full w-full border-0"
             />
@@ -725,8 +736,18 @@ export default function DashboardTable({
             ) : null}
 
             <div className="grid min-h-0 flex-1 gap-4 overflow-hidden p-4 lg:grid-cols-2">
-              <DokumenViewer title="Surat Permohonan" dokumen={suratPermohonan} zoom={zoom} />
-              <DokumenViewer title="Dokumen Pendukung" dokumen={activeDokumen} zoom={zoom} />
+              <DokumenViewer
+                title="Surat Permohonan"
+                dokumen={suratPermohonan}
+                permohonanId={selectedPermohonan.id}
+                zoom={zoom}
+              />
+              <DokumenViewer
+                title="Dokumen Pendukung"
+                dokumen={activeDokumen}
+                permohonanId={selectedPermohonan.id}
+                zoom={zoom}
+              />
             </div>
 
             {(selectedPermohonan.status === "pending" ||
