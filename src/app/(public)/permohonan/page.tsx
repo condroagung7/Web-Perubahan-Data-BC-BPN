@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useForm, useFieldArray, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Download, FileText } from "lucide-react";
 import {
   permohonanSchema,
   type PermohonanFormData,
@@ -12,6 +12,7 @@ import SearchableCombobox from "@/components/forms/SearchableCombobox";
 import DocumentChecklistUpload, {
   type DokumenPendukung,
 } from "@/components/forms/DocumentChecklistUpload";
+import PageThemeToggle from "@/components/theme/PageThemeToggle";
 
 const JENIS_PERUBAHAN_DATA = ["RKSP", "INWARD", "OUTWARD"] as const;
 const PIHAK_PENGAJU = ["NVOCC", "Operator Sarana Pengangkut"] as const;
@@ -60,7 +61,7 @@ export default function FormPermohonanPage() {
   } = useForm<PermohonanFormData>({
     resolver: zodResolver(permohonanSchema),
     defaultValues: {
-      alasan_perubahan: undefined, 
+      alasan_perubahan: "Pos/Barang",
       nomor_pos: "",
       nama_sarana_pengangkut: "",
       nomor_bl_awb: "",
@@ -144,14 +145,49 @@ export default function FormPermohonanPage() {
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-slate-950 px-6 py-16">
       <div className="max-w-3xl mx-auto bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-8">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
-          Formulir Permohonan Perubahan Data BC 1.1
-        </h1>
-        <p className="text-slate-600 dark:text-slate-400 mt-1 text-sm">
-          Isi data di bawah ini dengan benar. Permohonan akan diteruskan ke admin untuk ditinjau.
-        </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+              Formulir Permohonan Perubahan Data BC 1.1
+            </h1>
+            <p className="text-slate-600 dark:text-slate-400 mt-1 text-sm">
+              Isi data di bawah ini dengan benar. Permohonan akan diteruskan ke admin untuk ditinjau.
+            </p>
+          </div>
+          <PageThemeToggle />
+        </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-6">
+          {/* Download Format Surat (opsional) */}
+          <div className="bg-blue-50 dark:bg-blue-950 border border-blue-100 dark:border-blue-900 rounded-lg p-4">
+            <p className="text-sm font-medium text-blue-900 dark:text-blue-200">
+              Butuh format surat?
+            </p>
+            <p className="text-xs text-blue-700 dark:text-blue-300 mt-0.5">
+              Unduh template Word berikut apabila belum memiliki format surat permohonan dan pernyataan.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              
+               <a href="/templates/Format-Surat-Permohonan.docx"
+                download
+                className="inline-flex items-center gap-2 rounded-md bg-white dark:bg-slate-800 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-xs font-medium px-3 py-2 hover:bg-blue-100 dark:hover:bg-blue-900 transition"
+              >
+                <FileText size={14} />
+                Format Surat Permohonan
+                <Download size={13} />
+              </a>
+              
+              <a  href="/templates/Format-Surat-Pernyataan.docx"
+                download
+                className="inline-flex items-center gap-2 rounded-md bg-white dark:bg-slate-800 border border-blue-200 dark:border-blue-800 text-blue-700 dark:text-blue-300 text-xs font-medium px-3 py-2 hover:bg-blue-100 dark:hover:bg-blue-900 transition"
+              >
+                <FileText size={14} />
+                Format Surat Pernyataan
+                <Download size={13} />
+              </a>
+            </div>
+          </div>
+
           {/* Data Perusahaan */}
           <fieldset className="space-y-4">
             <legend className="font-semibold text-slate-800 dark:text-slate-200 text-sm">Data Perusahaan</legend>

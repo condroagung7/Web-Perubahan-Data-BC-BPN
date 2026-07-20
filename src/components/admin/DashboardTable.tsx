@@ -15,14 +15,54 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
-import type { DokumenPendukung, Permohonan, StatusPermohonan } from "@/types/database";
+import type {
+  DokumenPendukung,
+  Permohonan,
+  StatusPermohonan,
+  StatusSeksi,
+} from "@/types/database";
 
 const STATUS_LABEL: Record<StatusPermohonan, { text: string; className: string }> = {
   pending: { text: "Menunggu", className: "bg-amber-100 text-amber-700" },
   diproses: { text: "Diproses", className: "bg-blue-100 text-blue-700" },
-  disetujui: { text: "Diterima Lengkap", className: "bg-green-100 text-green-700" },
+  disetujui: { text: "Menunggu Disposisi", className: "bg-amber-100 text-amber-700" },
   ditolak: { text: "Kekurangan Dokumen", className: "bg-red-100 text-red-700" },
 };
+
+const STATUS_SEKSI_LABEL: Record<StatusSeksi, string> = {
+  konfirmasi_seksi_terkait: "Konfirmasi Seksi Terkait",
+  proses: "Proses",
+  persetujuan: "Persetujuan",
+};
+
+const STATUS_SEKSI_OPTIONS: StatusSeksi[] = [
+  "konfirmasi_seksi_terkait",
+  "proses",
+  "persetujuan",
+];
+
+type DisplayStatus = StatusPermohonan | StatusSeksi;
+
+const DISPLAY_STATUS_LABEL: Record<DisplayStatus, { text: string; className: string }> = {
+  pending: { text: "Menunggu", className: "bg-amber-100 text-amber-700" },
+  diproses: { text: "Diproses", className: "bg-blue-100 text-blue-700" },
+  disetujui: { text: "Menunggu Disposisi", className: "bg-amber-100 text-amber-700" },
+  ditolak: { text: "Kekurangan Dokumen", className: "bg-red-100 text-red-700" },
+  konfirmasi_seksi_terkait: {
+    text: "Konfirmasi Seksi Terkait",
+    className: "bg-indigo-100 text-indigo-700",
+  },
+  proses: { text: "Proses", className: "bg-blue-100 text-blue-700" },
+  persetujuan: { text: "Persetujuan", className: "bg-green-100 text-green-700" },
+};
+
+function getDisplayStatus(permohonan: Permohonan): DisplayStatus {
+  if (permohonan.status === "disetujui" || permohonan.status === "ditolak") {
+    return permohonan.status;
+  }
+
+  return permohonan.status_seksi ?? permohonan.status;
+}
 
 type StorageUsage = {
   limitMb: number;
@@ -122,6 +162,9 @@ export default function DashboardTable({
   const [storageUsage, setStorageUsage] = useState<StorageUsage | null>(null);
   const [storageLoading, setStorageLoading] = useState(true);
   const [storageError, setStorageError] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Permohonan | null>(null);
+  const [picTarget, setPicTarget] = useState<Permohonan | null>(null);
+  const [picName, setPicName] = useState("");
 
   async function loadStorageUsage() {
     setStorageLoading(true);
@@ -153,6 +196,59 @@ export default function DashboardTable({
   function updatePermohonan(id: string, updater: (permohonan: Permohonan) => Permohonan) {
     setData((prev) => prev.map((p) => (p.id === id ? updater(p) : p)));
     setSelectedPermohonan((prev) => (prev?.id === id ? updater(prev) : prev));
+  }
+
+  async function updateAdminMeta(
+    id: string,
+    payload: Partial<Pick<Permohonan, "id_nadine" | "pic" | "status" | "status_seksi">>
+  ) {
+    const previous = data.find((item) => item.id === id);
+
+    updatePermohonan(id, (permohonan) => ({
+      ...permohonan,
+      ...payload,
+    }));
+
+    const res = await fetch("/api/admin/update-meta", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id, ...payload }),
+    });
+
+    if (!res.ok) {
+      const json = (await res.json()) as { error?: string };
+      if (previous) {
+        updatePermohonan(id, () => previous);
+      }
+      alert(json.error ?? "Gagal menyimpan data admin");
+    }
+  }
+
+  function handleIdNadineBlur(id: string, value: string) {
+    updateAdminMeta(id, { id_nadine: value.trim() || null });
+  }
+
+  function handleStatusSeksiChange(id: string, value: string) {
+    if (value === "pending" || value === "diproses") {
+      updateAdminMeta(id, {
+        status: value,
+        status_seksi: null,
+      });
+      return;
+    }
+
+    if (value === "disetujui" || value === "ditolak") {
+      updateAdminMeta(id, {
+        status: value,
+        status_seksi: null,
+      });
+      return;
+    }
+
+    updateAdminMeta(id, {
+      status: "diproses",
+      status_seksi: value ? (value as StatusSeksi) : null,
+    });
   }
 
   async function getSignedDokumenUrl(permohonanId: string, path: string) {
@@ -198,15 +294,10 @@ export default function DashboardTable({
     }
   }
 
-  async function handleDeleteBerkasPermohonan(permohonan: Permohonan) {
-    const yakin = confirm(
-      "Apakah yakin ingin menghapus surat persetujuan dan dokumen pendukung ?"
-    );
-    if (!yakin) return;
-
+  async function executeDeleteBerkasPermohonan(permohonan: Permohonan) {
     setDeletingBerkasId(permohonan.id);
     try {
-      const res = await fetch("/api/admin/delete-berkas-permohonan", {
+      const res = await fetch("/api/admin/delete-permohonan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: permohonan.id }),
@@ -214,39 +305,54 @@ export default function DashboardTable({
       const json = (await res.json()) as { error?: string };
 
       if (!res.ok) {
-        alert(json.error ?? "Gagal menghapus berkas permohonan");
+        alert(json.error ?? "Gagal menghapus permohonan");
         return;
       }
 
-      updatePermohonan(permohonan.id, (item) => ({
-        ...item,
-        dokumen_pendukung: [],
-        surat_persetujuan_url: null,
-      }));
+      setDeleteTarget(null);
+      setData((prev) => prev.filter((item) => item.id !== permohonan.id));
+      if (selectedPermohonan?.id === permohonan.id) {
+        setSelectedPermohonan(null);
+        setPreviewDokumen([]);
+      }
       loadStorageUsage();
     } finally {
       setDeletingBerkasId(null);
     }
   }
 
-  async function handleDiterimaLengkap(id: string) {
+  async function executeDiterimaLengkap(id: string, pic: string) {
+    if (!pic.trim()) return;
+
     setLoadingId(id);
     try {
       const res = await fetch("/api/admin/approve", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
+        body: JSON.stringify({ id, pic: pic.trim() }),
       });
+
+      const json = (await res.json()) as { url?: string; error?: string };
 
       if (res.ok) {
         setData((prev) =>
-          prev.map((p) => (p.id === id ? { ...p, status: "disetujui" } : p))
+          prev.map((p) =>
+            p.id === id
+              ? {
+                  ...p,
+                  status: "disetujui",
+                  pic: pic.trim(),
+                  surat_persetujuan_url: json.url ?? p.surat_persetujuan_url,
+                }
+              : p
+          )
         );
         setSelectedPermohonan(null);
         setPreviewDokumen([]);
+        setPicTarget(null);
+        setPicName("");
         loadStorageUsage();
       } else {
-        const json = await res.json();
         alert(json.error ?? "Gagal menandai dokumen diterima lengkap");
       }
     } finally {
@@ -308,7 +414,7 @@ export default function DashboardTable({
               </div>
               <div>
                 <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
-                  Kapasitas Supabase Storage
+                  Kapasitas Database
                 </h2>
                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                   Bucket dokumen pendukung dan surat persetujuan.
@@ -430,21 +536,37 @@ export default function DashboardTable({
             <thead className="bg-slate-50 text-left text-slate-500 dark:bg-slate-800 dark:text-slate-400">
               <tr>
                 <th className="px-4 py-3 font-medium">Kode</th>
+                <th className="px-4 py-3 font-medium">ID Nadine</th>
+                <th className="px-4 py-3 font-medium">Nomor Surat</th>
                 <th className="px-4 py-3 font-medium">Perusahaan</th>
-                <th className="px-4 py-3 font-medium">Jenis</th>
-                <th className="px-4 py-3 font-medium">Ringkasan Perubahan</th>
+                <th className="px-4 py-3 font-medium">Perihal</th>
+                <th className="px-4 py-3 font-medium">Tanggal Masuk</th>
+                <th className="px-4 py-3 font-medium">PIC</th>
                 <th className="px-4 py-3 font-medium">Status</th>
-                <th className="px-4 py-3 text-right font-medium">Aksi</th>
+                <th className="px-4 py-3 text-center font-medium">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
               {data.map((p) => {
                 const hasBerkas =
                   getDokumenList(p).length > 0 || Boolean(p.surat_persetujuan_url);
+                const displayStatus = getDisplayStatus(p);
+                const displayStatusLabel = DISPLAY_STATUS_LABEL[displayStatus];
 
                 return (
                   <tr key={p.id}>
                     <td className="px-4 py-3 font-mono text-xs">{p.kode_tracking}</td>
+                    <td className="px-4 py-3">
+                      <input
+                        defaultValue={p.id_nadine ?? ""}
+                        onBlur={(event) => handleIdNadineBlur(p.id, event.target.value)}
+                        placeholder="Isi ID"
+                        className="w-32 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-900 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-blue-950"
+                      />
+                    </td>
+                    <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">
+                      {p.nomor_surat_permohonan}
+                    </td>
                     <td className="px-4 py-3">
                       <div className="font-medium text-slate-900 dark:text-white">
                         {p.nama_perusahaan}
@@ -453,35 +575,53 @@ export default function DashboardTable({
                         {p.email_perusahaan}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-slate-700 dark:text-slate-300">
-                      {p.jenis_perubahan_data}
+                    <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">
+                      {p.perihal}
                     </td>
                     <td className="px-4 py-3 text-xs text-slate-600 dark:text-slate-400">
-                      {p.detail_perubahan.length} baris data diubah
+                      {new Intl.DateTimeFormat("id-ID", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      }).format(new Date(p.created_at))}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-slate-700 dark:text-slate-300">
+                      {p.pic ?? "-"}
                     </td>
                     <td className="px-4 py-3">
-                      <span
-                        className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                          STATUS_LABEL[p.status].className
-                        }`}
-                      >
-                        {STATUS_LABEL[p.status].text}
-                      </span>
+                      <div className="min-w-48">
+                        <select
+                          value={p.status_seksi ?? p.status}
+                          onChange={(event) => handleStatusSeksiChange(p.id, event.target.value)}
+                          className={`w-full rounded-full border px-3 py-1 text-xs font-medium outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100 disabled:cursor-not-allowed disabled:opacity-100 dark:focus:ring-blue-950 ${displayStatusLabel.className}`}
+                        >
+                          <option value="pending">Menunggu</option>
+                          <option value="diproses">Diproses</option>
+                          {STATUS_SEKSI_OPTIONS.map((status) => (
+                            <option key={status} value={status}>
+                              {STATUS_SEKSI_LABEL[status]}
+                            </option>
+                          ))}
+                          <option value="disetujui">Menunggu Disposisi</option>
+                          <option value="ditolak">Kekurangan Dokumen</option>
+                        </select>
+                      </div>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <div className="inline-flex items-center justify-end gap-2">
+                      <div className="inline-flex items-center justify-end gap-1.5">
                         <button
                           type="button"
                           onClick={() => handleOpenReview(p)}
                           disabled={getDokumenList(p).length === 0 || reviewLoadingId === p.id}
-                          className="inline-flex items-center gap-1.5 rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                          title="Tinjau dokumen"
+                          aria-label="Tinjau dokumen"
+                          className="inline-flex size-8 items-center justify-center rounded-md border border-slate-200 text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
                         >
                           {reviewLoadingId === p.id ? (
                             <Loader2 size={14} className="animate-spin" />
                           ) : (
                             <FileText size={14} />
                           )}
-                          Tinjau
                         </button>
 
                         {p.surat_persetujuan_url ? (
@@ -489,24 +629,27 @@ export default function DashboardTable({
                             href={p.surat_persetujuan_url}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-xs text-blue-600 hover:underline"
+                            title="Lihat surat"
+                            aria-label="Lihat surat"
+                            className="inline-flex size-8 items-center justify-center rounded-md border border-blue-100 bg-blue-50 text-blue-700 transition hover:bg-blue-100 dark:border-blue-950 dark:bg-blue-950/30 dark:text-blue-300 dark:hover:bg-blue-950"
                           >
-                            Lihat Surat
+                            <ExternalLink size={14} />
                           </a>
                         ) : null}
 
                         <button
                           type="button"
-                          onClick={() => handleDeleteBerkasPermohonan(p)}
+                          onClick={() => setDeleteTarget(p)}
                           disabled={!hasBerkas || deletingBerkasId === p.id}
-                          className="inline-flex items-center gap-1.5 rounded-md bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                          title="Hapus permohonan"
+                          aria-label="Hapus permohonan"
+                          className="inline-flex size-8 items-center justify-center rounded-md bg-red-600 text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           {deletingBerkasId === p.id ? (
                             <Loader2 size={14} className="animate-spin" />
                           ) : (
                             <Trash2 size={14} />
                           )}
-                          Hapus
                         </button>
                       </div>
                     </td>
@@ -604,7 +747,10 @@ export default function DashboardTable({
                 </button>
                 <button
                   type="button"
-                  onClick={() => handleDiterimaLengkap(selectedPermohonan.id)}
+                  onClick={() => {
+                    setPicTarget(selectedPermohonan);
+                    setPicName(selectedPermohonan.pic ?? "");
+                  }}
                   disabled={loadingId === selectedPermohonan.id}
                   className="rounded-md bg-green-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-green-700 disabled:opacity-60"
                 >
@@ -613,6 +759,142 @@ export default function DashboardTable({
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {deleteTarget && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/60 px-4 py-6 backdrop-blur-sm">
+          <div className="w-full max-w-md overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900">
+            <div className="flex justify-end px-4 pt-4">
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                className="rounded-md p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                aria-label="Tutup konfirmasi hapus"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="px-8 pb-8 text-center">
+              <div className="mx-auto flex size-20 items-center justify-center rounded-full border border-red-100 bg-red-50 text-red-600 dark:border-red-950 dark:bg-red-950/30 dark:text-red-300">
+                <Trash2 size={34} />
+              </div>
+              <h2 className="mt-5 text-xl font-semibold text-slate-950 dark:text-white">
+                Hapus Permohonan
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                Apakah yakin ingin menghapus surat persetujuan dan dokumen pendukung?
+              </p>
+              <div className="mt-4 rounded-lg bg-slate-50 px-3 py-2 text-left text-xs text-slate-600 dark:bg-slate-950 dark:text-slate-300">
+                <p className="font-medium text-slate-900 dark:text-white">
+                  {deleteTarget.nama_perusahaan}
+                </p>
+                <p className="mt-1 font-mono">{deleteTarget.kode_tracking}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 border-t border-slate-100 px-5 py-4 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(null)}
+                disabled={deletingBerkasId === deleteTarget.id}
+                className="rounded-md border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={() => executeDeleteBerkasPermohonan(deleteTarget)}
+                disabled={deletingBerkasId === deleteTarget.id}
+                className="inline-flex items-center justify-center gap-2 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:opacity-60"
+              >
+                {deletingBerkasId === deleteTarget.id ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <Trash2 size={16} />
+                )}
+                Hapus
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {picTarget && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-slate-950/60 px-4 py-6 backdrop-blur-sm">
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              executeDiterimaLengkap(picTarget.id, picName);
+            }}
+            className="w-full max-w-md overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl dark:border-slate-800 dark:bg-slate-900"
+          >
+            <div className="flex justify-end px-4 pt-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setPicTarget(null);
+                  setPicName("");
+                }}
+                className="rounded-md p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                aria-label="Tutup input PIC"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="px-8 pb-8 text-center">
+              <div className="mx-auto flex size-20 items-center justify-center rounded-full border border-blue-100 bg-blue-50 text-blue-600 dark:border-blue-950 dark:bg-blue-950/30 dark:text-blue-300">
+                <CheckCircle2 size={34} />
+              </div>
+              <h2 className="mt-5 text-xl font-semibold text-slate-950 dark:text-white">
+                Nama PIC
+              </h2>
+              <p className="mt-3 text-sm leading-6 text-slate-600 dark:text-slate-300">
+                Masukkan nama petugas yang memproses permohonan ini.
+              </p>
+              <input
+                value={picName}
+                onChange={(event) => setPicName(event.target.value)}
+                placeholder="Contoh: Condro Agung"
+                autoFocus
+                className="mt-5 w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:ring-blue-950"
+              />
+              <div className="mt-4 rounded-lg bg-slate-50 px-3 py-2 text-left text-xs text-slate-600 dark:bg-slate-950 dark:text-slate-300">
+                <p className="font-medium text-slate-900 dark:text-white">
+                  {picTarget.nama_perusahaan}
+                </p>
+                <p className="mt-1 font-mono">{picTarget.kode_tracking}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 border-t border-slate-100 px-5 py-4 dark:border-slate-800">
+              <button
+                type="button"
+                onClick={() => {
+                  setPicTarget(null);
+                  setPicName("");
+                }}
+                disabled={loadingId === picTarget.id}
+                className="rounded-md border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-60 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                disabled={loadingId === picTarget.id || !picName.trim()}
+                className="inline-flex items-center justify-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700 disabled:opacity-60"
+              >
+                {loadingId === picTarget.id ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : (
+                  <CheckCircle2 size={16} />
+                )}
+                Simpan
+              </button>
+            </div>
+          </form>
         </div>
       )}
     </div>

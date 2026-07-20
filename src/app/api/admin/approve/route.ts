@@ -1,8 +1,64 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceRoleClient } from "@/lib/supabase/server";
 import { generateSuratPersetujuan } from "@/lib/docx/generate-surat";
-import { kirimSuratPersetujuan } from "@/lib/email/resend";
+import { kirimDokumenPendukungDiterimaLengkap } from "@/lib/email/resend";
 import { assertAdmin } from "@/lib/auth/admin";
+import type { DokumenPendukung } from "@/types/database";
+
+const DOKUMEN_BUCKET = "dokumen-permohonan";
+
+function sanitizeFilename(filename: string, fallback: string) {
+  const cleaned = filename.replace(/[\\/:*?"<>|]/g, "-").trim();
+  return cleaned || fallback;
+}
+
+function isSuratPernyataan(dokumen: DokumenPendukung) {
+  return `${dokumen.nama} ${dokumen.nama_file}`.toLowerCase().includes("surat pernyataan");
+}
+
+function getContentType(filename: string) {
+  const extension = filename.split(".").pop()?.toLowerCase();
+
+  if (extension === "pdf") return "application/pdf";
+  if (extension === "doc") return "application/msword";
+  if (extension === "docx") {
+    return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+  }
+  if (extension === "jpg" || extension === "jpeg") return "image/jpeg";
+  if (extension === "png") return "image/png";
+
+  return "application/octet-stream";
+}
+
+async function getDokumenPendukungAttachments(
+  supabase: ReturnType<typeof createServiceRoleClient>,
+  dokumenPendukung: DokumenPendukung[] | null
+) {
+  const documents = dokumenPendukung ?? [];
+
+  const attachments = await Promise.all(
+    documents.map(async (dokumen, index) => {
+      const { data, error } = await supabase.storage
+        .from(DOKUMEN_BUCKET)
+        .download(dokumen.url);
+
+      if (error || !data) {
+        throw new Error(`Gagal mengambil dokumen pendukung: ${dokumen.nama_file}`);
+      }
+
+      return {
+        filename: sanitizeFilename(
+          dokumen.nama_file,
+          `Dokumen-Pendukung-${index + 1}`
+        ),
+        content: Buffer.from(await data.arrayBuffer()),
+        contentType: getContentType(dokumen.nama_file),
+      };
+    })
+  );
+
+  return attachments;
+}
 
 export async function POST(request: NextRequest) {
   const supabaseAuth = await createClient();
@@ -17,9 +73,13 @@ export async function POST(request: NextRequest) {
   const adminError = assertAdmin(user);
   if (adminError) return adminError;
 
-  const { id } = await request.json();
+  const { id, pic } = await request.json();
   if (!id) {
     return NextResponse.json({ error: "ID permohonan wajib diisi" }, { status: 400 });
+  }
+
+  if (!pic?.trim()) {
+    return NextResponse.json({ error: "Nama PIC wajib diisi" }, { status: 400 });
   }
 
   const supabase = createServiceRoleClient();
@@ -32,6 +92,16 @@ export async function POST(request: NextRequest) {
 
   if (fetchError || !permohonan) {
     return NextResponse.json({ error: "Permohonan tidak ditemukan" }, { status: 404 });
+  }
+
+  const dokumenPendukung = permohonan.dokumen_pendukung ?? [];
+  const hasSuratPernyataan = dokumenPendukung.some(isSuratPernyataan);
+
+  if (!hasSuratPernyataan) {
+    return NextResponse.json(
+      { error: "Surat Pernyataan belum ada di dokumen pendukung" },
+      { status: 400 }
+    );
   }
 
   const docxBuffer = await generateSuratPersetujuan(permohonan);
@@ -58,6 +128,7 @@ export async function POST(request: NextRequest) {
     .from("permohonan")
     .update({
       status: "disetujui",
+      pic: pic.trim(),
       surat_persetujuan_url: signedUrlData?.signedUrl ?? null,
     })
     .eq("id", id);
@@ -76,9 +147,18 @@ export async function POST(request: NextRequest) {
   });
 
   try {
-    await kirimSuratPersetujuan(permohonan, docxBuffer);
+    const attachments = await getDokumenPendukungAttachments(
+      supabase,
+      dokumenPendukung
+    );
+
+    if (attachments.length === 0) {
+      console.warn("Tidak ada dokumen pendukung untuk dikirim:", permohonan.id);
+    } else {
+      await kirimDokumenPendukungDiterimaLengkap(permohonan, attachments);
+    }
   } catch (emailError) {
-    console.error("Gagal kirim email surat:", emailError);
+    console.error("Gagal kirim email dokumen pendukung:", emailError);
   }
 
   return NextResponse.json({

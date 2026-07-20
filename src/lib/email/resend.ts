@@ -40,6 +40,7 @@ export async function kirimNotifikasiPermohonanBaru(data: Permohonan) {
         <table style="width: 100%; border-collapse: collapse;">
           <tr><td style="padding: 6px 0;"><strong>Kode Tracking</strong></td><td>${data.kode_tracking}</td></tr>
           <tr><td style="padding: 6px 0;"><strong>Nama Perusahaan</strong></td><td>${data.nama_perusahaan}</td></tr>
+          <tr><td style="padding: 6px 0;"><strong>Email Perusahaan</strong></td><td>${data.email_perusahaan}</td></tr>
           <tr><td style="padding: 6px 0;"><strong>Nomor Surat Permohonan</strong></td><td>${data.nomor_surat_permohonan}</td></tr>
           <tr><td style="padding: 6px 0;"><strong>Tanggal Surat</strong></td><td>${data.tanggal_surat_permohonan}</td></tr>
           <tr><td style="padding: 6px 0;"><strong>Perihal</strong></td><td>${data.perihal}</td></tr>
@@ -71,7 +72,10 @@ export async function kirimSuratPersetujuan(data: Permohonan, docxBuffer: Buffer
     subject: `Surat Persetujuan Perubahan Data - ${data.kode_tracking}`,
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-        <p>Yth. ${data.nama_perusahaan},</p>
+        <p>
+          Yth. ${data.nama_perusahaan}<br />
+          <span style="color:#475569;">${data.email_perusahaan}</span>
+        </p>
         <p>
           Permohonan perubahan data Anda dengan kode tracking
           <strong>${data.kode_tracking}</strong> telah <strong>disetujui</strong>.
@@ -89,6 +93,41 @@ export async function kirimSuratPersetujuan(data: Permohonan, docxBuffer: Buffer
   });
 }
 
+export async function kirimDokumenPendukungDiterimaLengkap(
+  data: Permohonan,
+  attachments: Array<{ filename: string; content: Buffer; contentType?: string }>
+) {
+  const daftarLampiran = attachments
+    .map((attachment) => `<li>${attachment.filename}</li>`)
+    .join("");
+
+  return resend.emails.send({
+    from: process.env.EMAIL_FROM!,
+    to: data.email_perusahaan,
+    subject: `Dokumen Pendukung Permohonan Diterima Lengkap - ${data.kode_tracking}`,
+    html: `
+      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <p>
+          Dari. ${data.nama_perusahaan}<br />
+          <span style="color:#475569;">${data.email_perusahaan}</span>
+        </p>
+        <p>
+          Permohonan perubahan data dengan kode tracking
+          <strong>${data.kode_tracking}</strong> telah dinyatakan
+          <strong>diterima lengkap</strong> oleh tim Manifes.
+        </p>
+        <p>
+          Seluruh dokumen pendukung yang tercatat pada aplikasi Beriman kami teruskan ke email ini.
+        </p>
+        <p><strong>Daftar lampiran:</strong></p>
+        <ul>${daftarLampiran}</ul>
+        <p>Terima kasih.</p>
+      </div>
+    `,
+    attachments,
+  });
+}
+
 export async function kirimNotifikasiPenolakan(data: Permohonan, catatan: string) {
   return resend.emails.send({
     from: process.env.EMAIL_FROM!,
@@ -96,13 +135,18 @@ export async function kirimNotifikasiPenolakan(data: Permohonan, catatan: string
     subject: `Permohonan Perubahan Data Ditolak - ${data.kode_tracking}`,
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-        <p>Yth. ${data.nama_perusahaan},</p>
+        <p>
+          Dari. ${data.nama_perusahaan}<br />
+          <span style="color:#475569;">${data.email_perusahaan}</span>
+        </p>
         <p>
           Mohon maaf, permohonan perubahan data Anda dengan kode tracking
-          <strong>${data.kode_tracking}</strong> <strong>belum dapat kami setujui</strong>.
+          <strong>${data.kode_tracking}</strong> tidak dapat kami setujui.
         </p>
-        <p><strong>Catatan:</strong> ${catatan}</p>
-        <p>Silakan ajukan kembali dengan melengkapi data yang diperlukan.</p>
+        <p><strong>Alasan Penolakan:</strong></p>
+        <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#991b1b;padding:12px 14px;">
+          ${catatan}
+        </div>
       </div>
     `,
   });

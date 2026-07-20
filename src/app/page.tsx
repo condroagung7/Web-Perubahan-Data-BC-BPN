@@ -53,9 +53,9 @@ const ACTIONS = [
 ];
 
 const FEATURES = [
-  { label: "Terintegrasi", desc: "Sistem kepabeanan nasional", icon: Ship },
-  { label: "Aman", desc: "Sertifikasi ISO 27001", icon: Lock },
-  { label: "Cepat", desc: "Rata-rata verifikasi 1,6 jam", icon: Clock3 },
+  { label: "Terintegrasi", desc: "Ekosistem Yang Saling Terhubung", icon: Ship },
+  { label: "Aman", desc: "Kerahasiaan Data Terjaga", icon: Lock },
+  { label: "Cepat", desc: "Efektif dan Efisien", icon: Clock3 },
   { label: "Terlacak", desc: "Monitor real-time", icon: Eye },
 ];
 
@@ -63,7 +63,7 @@ const STEPS = [
   "Siapkan surat permohonan dan dokumen pendukung.",
   "Isi formulir perubahan data BC 1.1.",
   "Petugas meninjau kelengkapan dokumen.",
-  "Surat persetujuan diterbitkan secara elektronik.",
+  "Surat persetujuan akan dikirim via email.",
 ];
 
 export default function HomePage() {
@@ -87,7 +87,7 @@ export default function HomePage() {
               <Ship size={20} />
             </div>
             <div>
-              <p className="text-xl font-black leading-none tracking-wide">BERIMAN</p>
+              <p className="text-xl font-black leading-none tracking-[0.16em]">BERIMAN</p>
               <p className="mt-1 text-[11px] font-medium text-blue-100">
                 Benar, Rapi dan Aman
               </p>
@@ -122,8 +122,8 @@ export default function HomePage() {
             </div>
 
             <h1 className="mt-6 text-4xl font-black leading-tight tracking-tight sm:text-5xl">
-              Urus Perubahan Data Manifes
-              <span className="block">Semudah Ini.</span>
+              Portal Perubahan Data Manifes  
+              <span className="block">Bea Cukai Balikpapan.</span>
             </h1>
 
             <p className="mt-4 max-w-xl text-sm leading-6 text-blue-100 sm:text-[15px]">
@@ -269,7 +269,7 @@ export default function HomePage() {
 
       <footer className="bg-[#071525] px-6 py-6">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 text-xs font-semibold text-blue-100 sm:flex-row sm:items-center sm:justify-between">
-          <p>BERIMAN - Sistem Perubahan Data Manifes Kepabeanan</p>
+          <p>BERIMAN - Sistem Perubahan Data Manifes </p>
           <div className="flex flex-wrap gap-4">
             <Link href="/permohonan" className="hover:text-[#E8A83C]">Ajukan Permohonan</Link>
             <Link href="/status" className="hover:text-[#E8A83C]">Cek Status</Link>

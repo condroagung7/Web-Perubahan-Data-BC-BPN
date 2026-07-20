@@ -1,4 +1,5 @@
 export type StatusPermohonan = "pending" | "diproses" | "disetujui" | "ditolak";
+export type StatusSeksi = "konfirmasi_seksi_terkait" | "proses" | "persetujuan";
 export type JenisPerubahanData = "RKSP" | "INWARD" | "OUTWARD";
 export type PihakPengaju = "NVOCC" | "Operator Sarana Pengangkut";
 
@@ -42,6 +43,9 @@ export interface Permohonan {
   detail_perubahan: DetailPerubahan[];
   dokumen_pendukung: DokumenPendukung[];
   status: StatusPermohonan;
+  status_seksi: StatusSeksi | null;
+  id_nadine: string | null;
+  pic: string | null;
   surat_persetujuan_url: string | null;
   catatan_admin: string | null;
   kode_tracking: string;

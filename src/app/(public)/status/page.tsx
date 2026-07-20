@@ -5,8 +5,10 @@ import { useState, type FormEvent } from "react";
 interface StatusData {
   kode_tracking: string;
   nama_perusahaan: string;
+  email_perusahaan: string;
   jenis_perubahan_data: string;
   status: string;
+  status_seksi: string | null;
   created_at: string;
   catatan_admin: string | null;
 }
@@ -14,9 +16,23 @@ interface StatusData {
 const STATUS_LABEL: Record<string, { text: string; className: string }> = {
   pending: { text: "Menunggu Diproses", className: "bg-amber-100 text-amber-700" },
   diproses: { text: "Sedang Diproses", className: "bg-blue-100 text-blue-700" },
-  disetujui: { text: "Diterima Lengkap", className: "bg-green-100 text-green-700" },
+  disetujui: { text: "Menunggu Disposisi", className: "bg-amber-100 text-amber-700" },
   ditolak: { text: "Kekurangan Dokumen", className: "bg-red-100 text-red-700" },
+  konfirmasi_seksi_terkait: {
+    text: "Konfirmasi Seksi Terkait",
+    className: "bg-indigo-100 text-indigo-700",
+  },
+  proses: { text: "Proses", className: "bg-blue-100 text-blue-700" },
+  persetujuan: { text: "Persetujuan", className: "bg-green-100 text-green-700" },
 };
+
+function getDisplayStatus(data: StatusData) {
+  if (data.status === "disetujui" || data.status === "ditolak") {
+    return data.status;
+  }
+
+  return data.status_seksi ?? data.status;
+}
 
 export default function StatusPage() {
   const [kode, setKode] = useState("");
@@ -80,22 +96,40 @@ export default function StatusPage() {
 
         {data && (
           <div className="mt-6 border-t border-slate-200 dark:border-slate-800 pt-4 space-y-2 text-sm">
+            {(() => {
+              const displayStatus = getDisplayStatus(data);
+              const statusLabel = STATUS_LABEL[displayStatus] ?? {
+                text: displayStatus,
+                className: "bg-slate-100 text-slate-700",
+              };
+
+              return (
+                <>
             <Row label="Kode Tracking" value={data.kode_tracking} />
             <Row label="Nama Perusahaan" value={data.nama_perusahaan} />
+            <Row label="Email Perusahaan" value={data.email_perusahaan} />
             <Row label="Jenis Perubahan Data" value={data.jenis_perubahan_data} />
             <div className="flex justify-between items-center">
               <span className="text-slate-500">Status</span>
               <span
                 className={`px-2.5 py-1 rounded-full text-xs font-medium ${
-                  STATUS_LABEL[data.status]?.className ?? "bg-slate-100 text-slate-700"
+                  statusLabel.className
                 }`}
               >
-                {STATUS_LABEL[data.status]?.text ?? data.status}
+                {statusLabel.text}
               </span>
             </div>
-            {data.catatan_admin && (
-              <Row label="Catatan Admin" value={data.catatan_admin} />
+            {data.status === "ditolak" && data.catatan_admin && (
+              <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-red-800 dark:border-red-900 dark:bg-red-950 dark:text-red-200">
+                <p className="text-xs font-semibold uppercase tracking-wide">
+                  Alasan Kekurangan Dokumen
+                </p>
+                <p className="mt-1 text-sm leading-relaxed">{data.catatan_admin}</p>
+              </div>
             )}
+                </>
+              );
+            })()}
           </div>
         )}
       </div>

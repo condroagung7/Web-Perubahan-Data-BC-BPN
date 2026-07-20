@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 
 const BUCKET_NAME = "dokumen-permohonan";
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const MAX_FILE_SIZE_MB = 1;
+const MAX_FILE_SIZE = MAX_FILE_SIZE_MB * 1024 * 1024;
 
 function getSafeExtension(filename: string) {
   const extension = filename.split(".").pop()?.toLowerCase().replace(/[^a-z0-9]/g, "");
@@ -19,7 +20,10 @@ export async function POST(request: Request) {
     }
 
     if (file.size > MAX_FILE_SIZE) {
-      return NextResponse.json({ error: "Ukuran file maksimal 10MB" }, { status: 400 });
+      return NextResponse.json(
+        { error: `Ukuran file maksimal ${MAX_FILE_SIZE_MB} MB` },
+        { status: 400 }
+      );
     }
 
     const supabase = createServiceRoleClient();

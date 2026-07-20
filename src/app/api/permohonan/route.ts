@@ -86,7 +86,7 @@ export async function GET(request: NextRequest) {
   const { data, error } = await supabase
     .from("permohonan")
     .select(
-      "kode_tracking, nama_perusahaan, jenis_perubahan_data, status, created_at, catatan_admin"
+      "kode_tracking, nama_perusahaan, email_perusahaan, jenis_perubahan_data, status, status_seksi, created_at, catatan_admin"
     )
     .eq("kode_tracking", kode)
     .single();
