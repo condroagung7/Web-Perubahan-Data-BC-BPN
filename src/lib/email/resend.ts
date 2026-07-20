@@ -1,7 +1,18 @@
 import { Resend } from "resend";
 import type { Permohonan } from "@/types/database";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+let resendClient: Resend | null = null;
+
+function getResend() {
+  const apiKey = process.env.RESEND_API_KEY;
+
+  if (!apiKey) {
+    throw new Error("RESEND_API_KEY belum dikonfigurasi");
+  }
+
+  resendClient ??= new Resend(apiKey);
+  return resendClient;
+}
 
 function tabelDetailHtml(data: Permohonan) {
   const rows = data.detail_perubahan
@@ -30,7 +41,7 @@ function tabelDetailHtml(data: Permohonan) {
 }
 
 export async function kirimNotifikasiPermohonanBaru(data: Permohonan) {
-  return resend.emails.send({
+  return getResend().emails.send({
     from: process.env.EMAIL_FROM!,
     to: process.env.EMAIL_TUJUAN_INSTANSI!,
     subject: `Permohonan Perubahan Data Baru - ${data.nama_perusahaan} (${data.kode_tracking})`,
@@ -66,7 +77,7 @@ export async function kirimNotifikasiPermohonanBaru(data: Permohonan) {
 }
 
 export async function kirimSuratPersetujuan(data: Permohonan, docxBuffer: Buffer) {
-  return resend.emails.send({
+  return getResend().emails.send({
     from: process.env.EMAIL_FROM!,
     to: data.email_perusahaan,
     subject: `Surat Persetujuan Perubahan Data - ${data.kode_tracking}`,
@@ -101,7 +112,7 @@ export async function kirimDokumenPendukungDiterimaLengkap(
     .map((attachment) => `<li>${attachment.filename}</li>`)
     .join("");
 
-  return resend.emails.send({
+  return getResend().emails.send({
     from: process.env.EMAIL_FROM!,
     to: data.email_perusahaan,
     subject: `Dokumen Pendukung Permohonan Diterima Lengkap - ${data.kode_tracking}`,
@@ -129,7 +140,7 @@ export async function kirimDokumenPendukungDiterimaLengkap(
 }
 
 export async function kirimNotifikasiPenolakan(data: Permohonan, catatan: string) {
-  return resend.emails.send({
+  return getResend().emails.send({
     from: process.env.EMAIL_FROM!,
     to: data.email_perusahaan,
     subject: `Permohonan Perubahan Data Ditolak - ${data.kode_tracking}`,
