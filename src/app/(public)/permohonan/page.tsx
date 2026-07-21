@@ -182,7 +182,7 @@ export default function FormPermohonanPage() {
       <Script
         id={DEFAULT_SCRIPT_ID}
         src={SCRIPT_URL}
-        strategy="afterInteractive"
+        strategy="beforeInteractive"
       />
       <main className="min-h-screen bg-slate-50 dark:bg-slate-950 px-6 py-16">
       <div className="max-w-3xl mx-auto bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-8">
