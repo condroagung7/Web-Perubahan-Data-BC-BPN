@@ -1,13 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import Script from "next/script";
-import {
-  DEFAULT_SCRIPT_ID,
-  SCRIPT_URL,
-  Turnstile,
-  type TurnstileInstance,
-} from "@marsidev/react-turnstile";
+import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 import { useForm, useFieldArray, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Trash2, Download, FileText } from "lucide-react";
@@ -178,13 +172,7 @@ export default function FormPermohonanPage() {
   }
 
   return (
-    <>
-      <Script
-        id={DEFAULT_SCRIPT_ID}
-        src={SCRIPT_URL}
-        strategy="beforeInteractive"
-      />
-      <main className="min-h-screen bg-slate-50 dark:bg-slate-950 px-6 py-16">
+    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 px-6 py-16">
       <div className="max-w-3xl mx-auto bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-8">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -558,7 +546,6 @@ export default function FormPermohonanPage() {
               <Turnstile
                 ref={turnstileRef}
                 siteKey={turnstileSiteKey}
-                injectScript={false}
                 onSuccess={(token) => {
                   setCaptchaToken(token);
                   setCaptchaError(null);
@@ -600,7 +587,6 @@ export default function FormPermohonanPage() {
         </form>
         </div>
       </main>
-    </>
   );
 }
 
