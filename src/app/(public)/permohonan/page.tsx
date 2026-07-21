@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useForm, useFieldArray, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Trash2, Download, FileText } from "lucide-react";
+import { Turnstile } from "@marsidev/react-turnstile";
 import {
   permohonanSchema,
   type PermohonanFormData,
@@ -48,6 +49,8 @@ export default function FormPermohonanPage() {
   const [submitting, setSubmitting] = useState(false);
   const [hasil, setHasil] = useState<{ kode_tracking: string } | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [turnstileToken, setTurnstileToken] = useState<string>("");
+  const [turnstileError, setTurnstileError] = useState<string>("");
   const [jumlahBaris, setJumlahBaris] = useState(1);
 
   const {
@@ -109,13 +112,20 @@ export default function FormPermohonanPage() {
   }
 
   async function onSubmit(data: PermohonanFormData) {
+    // Validasi token Turnstile
+    if (!turnstileToken) {
+      setTurnstileError("Harap verifikasi bahwa Anda bukan robot");
+      return;
+    }
+
     setSubmitting(true);
     setErrorMsg(null);
+    setTurnstileError("");
     try {
       const res = await fetch("/api/permohonan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, turnstileToken }),
       });
       const json = await res.json();
 
@@ -127,6 +137,7 @@ export default function FormPermohonanPage() {
       setHasil({ kode_tracking: json.kode_tracking });
       reset();
       setJumlahBaris(1);
+      setTurnstileToken(""); // Reset token setelah submit berhasil
     } catch {
       setErrorMsg("Gagal mengirim permohonan. Coba lagi.");
     } finally {
@@ -528,6 +539,36 @@ export default function FormPermohonanPage() {
             }
           />
 
+          {/* Cloudflare Turnstile */}
+          <div className="mt-6">
+            <Turnstile
+              siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+              onSuccess={(token) => {
+                setTurnstileToken(token);
+                setTurnstileError("");
+              }}
+              onError={() => {
+                setTurnstileError(
+                  "Gagal memverifikasi. Harap refresh halaman dan coba lagi."
+                );
+              }}
+              onExpire={() => {
+                setTurnstileToken("");
+                setTurnstileError("Waktu verifikasi habis. Coba lagi.");
+              }}
+              options={{
+                theme: "auto",
+                size: "normal",
+              }}
+            />
+          </div>
+
+          {turnstileError && (
+            <p className="text-sm text-red-600 bg-red-50 rounded-md px-3 py-2">
+              {turnstileError}
+            </p>
+          )}
+
           {errorMsg && (
             <p className="text-sm text-red-600 bg-red-50 rounded-md px-3 py-2">
               {errorMsg}
@@ -536,8 +577,8 @@ export default function FormPermohonanPage() {
 
           <button
             type="submit"
-            disabled={submitting}
-            className="w-full rounded-lg bg-blue-600 py-3 font-medium text-white hover:bg-blue-700 disabled:opacity-60 transition"
+            disabled={submitting || !turnstileToken}
+            className="w-full rounded-lg bg-blue-600 py-3 font-medium text-white hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition mt-4"
           >
             {submitting ? "Mengirim..." : "Ajukan Permohonan"}
           </button>
