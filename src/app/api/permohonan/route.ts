@@ -61,7 +61,8 @@ export const POST = secureHandler(
     }
 
     // Hapus token dari body sebelum validasi schema
-    const { turnstileToken: _, ...dataWithoutToken } = body;
+    const dataWithoutToken = { ...body };
+    delete dataWithoutToken.turnstileToken;
 
     // Sanitize all string inputs before validation
     const sanitizedBody = sanitizeDeep(dataWithoutToken);
@@ -148,7 +149,7 @@ export const POST = secureHandler(
   },
   {
     rateLimit: RATE_LIMIT_PERMOHONAN,
-    csrf: true,
+    csrf: false, // Public form — Turnstile handles bot protection
     maxBodySize: 512_000, // 500KB max for form submission
   }
 );
