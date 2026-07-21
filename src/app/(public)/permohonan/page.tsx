@@ -541,12 +541,6 @@ export default function FormPermohonanPage() {
 
           {/* Cloudflare Turnstile */}
           <div className="mt-6">
-            <div className="mb-2 text-sm font-medium text-slate-700 dark:text-slate-300">
-              Verifikasi Keamanan (CAPTCHA)
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mb-3">
-              Selesaikan verifikasi ini untuk membuktikan Anda bukan robot.
-            </p>
             <Turnstile
               siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
               onSuccess={(token) => {
@@ -569,53 +563,6 @@ export default function FormPermohonanPage() {
             />
           </div>
 
-          {/* Form Validation Summary */}
-          {Object.keys(errors).length > 0 && (
-            <div className="bg-red-50 dark:bg-red-950 border border-red-200 dark:border-red-900 rounded-lg p-4">
-              <p className="text-sm font-medium text-red-800 dark:text-red-200">
-                ⚠️ Harap lengkapi data berikut:
-              </p>
-              <ul className="mt-2 space-y-1 text-sm text-red-700 dark:text-red-300">
-                {errors.nama_perusahaan?.message && (
-                  <li>• {errors.nama_perusahaan.message}</li>
-                )}
-                {errors.email_perusahaan?.message && (
-                  <li>• {errors.email_perusahaan.message}</li>
-                )}
-                {errors.alamat_perusahaan?.message && (
-                  <li>• {errors.alamat_perusahaan.message}</li>
-                )}
-                {errors.nomor_surat_permohonan?.message && (
-                  <li>• {errors.nomor_surat_permohonan.message}</li>
-                )}
-                {errors.tanggal_surat_permohonan?.message && (
-                  <li>• {errors.tanggal_surat_permohonan.message}</li>
-                )}
-                {errors.perihal?.message && (
-                  <li>• {errors.perihal.message}</li>
-                )}
-                {errors.jenis_perubahan_data?.message && (
-                  <li>• {errors.jenis_perubahan_data.message}</li>
-                )}
-                {errors.pihak_pengaju?.message && (
-                  <li>• {errors.pihak_pengaju.message}</li>
-                )}
-                {errors.nomor_aju_manifes?.message && (
-                  <li>• {errors.nomor_aju_manifes.message}</li>
-                )}
-                {errors.nomor_pendaftaran_bc11?.message && (
-                  <li>• {errors.nomor_pendaftaran_bc11.message}</li>
-                )}
-                {errors.alasan_perubahan?.message && (
-                  <li>• {errors.alasan_perubahan.message}</li>
-                )}
-                {errors.detail_perubahan?.message && (
-                  <li>• {errors.detail_perubahan.message}</li>
-                )}
-              </ul>
-            </div>
-          )}
-
           {turnstileError && (
             <p className="text-sm text-red-600 bg-red-50 rounded-md px-3 py-2">
               {turnstileError}
@@ -628,35 +575,12 @@ export default function FormPermohonanPage() {
             </p>
           )}
 
-          {/* Captcha Requirement Notice */}
-          {!turnstileToken && Object.keys(errors).length === 0 && (
-            <div className="bg-yellow-50 dark:bg-yellow-950 border border-yellow-200 dark:border-yellow-900 rounded-lg p-4">
-              <p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                🔒 Langkah terakhir: Verifikasi bahwa Anda bukan robot
-              </p>
-              <p className="mt-1 text-sm text-yellow-700 dark:text-yellow-300">
-                Silakan selesaikan captcha di atas sebelum mengajukan permohonan.
-              </p>
-            </div>
-          )}
-
           <button
             type="submit"
             disabled={submitting || !turnstileToken}
-            className="w-full rounded-lg bg-blue-600 py-3 font-medium text-white hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition mt-4 relative"
+            className="w-full rounded-lg bg-blue-600 py-3 font-medium text-white hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition mt-4"
           >
-            {submitting ? (
-              "Mengirim..."
-            ) : !turnstileToken ? (
-              <>
-                <span className="opacity-50">Ajukan Permohonan</span>
-                <span className="absolute right-4 text-xs font-normal bg-white/20 px-2 py-1 rounded">
-                  Tunggu verifikasi
-                </span>
-              </>
-            ) : (
-              "Ajukan Permohonan"
-            )}
+            {submitting ? "Mengirim..." : "Ajukan Permohonan"}
           </button>
         </form>
       </div>

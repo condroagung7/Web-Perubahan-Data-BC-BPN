@@ -148,7 +148,7 @@ export const POST = secureHandler(
   },
   {
     rateLimit: RATE_LIMIT_PERMOHONAN,
-    csrf: false, // Public form — Turnstile handles bot protection
+    csrf: true,
     maxBodySize: 512_000, // 500KB max for form submission
   }
 );
