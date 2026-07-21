@@ -57,25 +57,37 @@ middleware.ts                      # Proteksi route /admin
 
 > Catatan: kode aplikasi saat ini memakai `GROQ_API_KEY` pada endpoint `/api/chat`, jadi jangan gunakan nama env lama `GEMINI_API_KEY` saat deploy.
 
-### 4. Konfigurasi Environment
+### 4. Setup Cloudflare Turnstile (CAPTCHA)
+1. Masuk ke [Cloudflare Dashboard](https://dash.cloudflare.com/) → **Turnstile** → **Add widget**.
+2. Tambahkan hostname domain production aplikasi dan `localhost` untuk pengembangan lokal.
+3. Salin credential widget ke `.env.local`:
+   ```bash
+   NEXT_PUBLIC_TURNSTILE_SITE_KEY=site-key-dari-cloudflare
+   TURNSTILE_SECRET_KEY=secret-key-dari-cloudflare
+   ```
+4. `NEXT_PUBLIC_TURNSTILE_SITE_KEY` digunakan browser untuk menampilkan widget, sedangkan `TURNSTILE_SECRET_KEY` hanya digunakan endpoint server `/api/permohonan`. Jangan pernah mengekspos secret key ke client atau repository.
+5. Setelah mengubah environment variable, restart server development. Token Turnstile berlaku singkat dan hanya dapat dipakai untuk satu submit.
+
+### 5. Konfigurasi Environment
 ```bash
 cp .env.local.example .env.local
 ```
-Isi semua variabel sesuai kredensial di atas.
+Isi semua variabel sesuai kredensial di atas, termasuk dua variabel Turnstile pada langkah sebelumnya.
 
-### 5. Install & Jalankan Lokal
+### 6. Install & Jalankan Lokal
 ```bash
 npm install
 npm run dev
 ```
 Buka `http://localhost:3000`.
 
-### 6. Uji Alur
-1. Isi form di `/permohonan` → cek tabel `permohonan` di Supabase terisi, dan email masuk ke instansi.
-2. Login admin di `/admin/login` → buka `/admin/dashboard` → klik **Setujui** pada salah satu permohonan.
-3. Cek: status berubah, surat `.docx` muncul di Storage bucket `surat-persetujuan`, dan email surat terkirim ke pemohon.
-4. Cek status permohonan publik di `/status` pakai kode tracking.
-5. Coba chat widget AI di pojok kanan bawah.
+### 7. Uji Alur
+1. Buka `/permohonan` → selesaikan CAPTCHA Cloudflare Turnstile → isi dan kirim formulir. Request tanpa token atau dengan token kedaluwarsa harus ditolak.
+2. Setelah CAPTCHA valid, cek tabel `permohonan` di Supabase terisi, dan email masuk ke instansi.
+3. Login admin di `/admin/login` → buka `/admin/dashboard` → klik **Setujui** pada salah satu permohonan.
+4. Cek: status berubah, surat `.docx` muncul di Storage bucket `surat-persetujuan`, dan email surat terkirim ke pemohon.
+5. Cek status permohonan publik di `/status` pakai kode tracking.
+6. Coba chat widget AI di pojok kanan bawah.
 
 ## Deploy ke Vercel
 
@@ -94,6 +106,8 @@ Buka `http://localhost:3000`.
    - `GROQ_API_KEY`
    - `NEXT_PUBLIC_APP_URL`
    - `CRON_SECRET`
+   - `NEXT_PUBLIC_TURNSTILE_SITE_KEY`
+   - `TURNSTILE_SECRET_KEY`
 
    ### Opsional / fallback
    - `SUPABASE_URL`
@@ -107,7 +121,8 @@ Buka `http://localhost:3000`.
    - `NEXT_PUBLIC_APP_URL` harus diisi full URL production, misalnya `https://nama-project.vercel.app`.
    - `CRON_SECRET` wajib diisi agar endpoint cron cleanup tidak bisa dipanggil sembarang pihak.
    - `EMAIL_FROM` harus memakai sender/domain yang valid di Resend.
-   - `SUPABASE_SERVICE_ROLE_KEY` hanya disimpan di server-side env, jangan pernah dipublikasikan.
+   - `SUPABASE_SERVICE_ROLE_KEY` dan `TURNSTILE_SECRET_KEY` hanya disimpan di server-side env, jangan pernah dipublikasikan.
+   - Daftarkan domain deployment Vercel pada hostname widget di Cloudflare Turnstile. Tambahkan juga `localhost` agar CAPTCHA berfungsi saat development.
 
 5. Klik **Deploy**.
 6. Setelah live, buka Supabase **Authentication > URL Configuration** lalu tambahkan:

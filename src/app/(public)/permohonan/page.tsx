@@ -1,6 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
+import Script from "next/script";
+import {
+  DEFAULT_SCRIPT_ID,
+  SCRIPT_URL,
+  Turnstile,
+  type TurnstileInstance,
+} from "@marsidev/react-turnstile";
 import { useForm, useFieldArray, Controller, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, Trash2, Download, FileText } from "lucide-react";
@@ -48,7 +55,11 @@ export default function FormPermohonanPage() {
   const [submitting, setSubmitting] = useState(false);
   const [hasil, setHasil] = useState<{ kode_tracking: string } | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaError, setCaptchaError] = useState<string | null>(null);
   const [jumlahBaris, setJumlahBaris] = useState(1);
+  const turnstileRef = useRef<TurnstileInstance>(null);
+  const turnstileSiteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY;
 
   const {
     register,
@@ -109,13 +120,19 @@ export default function FormPermohonanPage() {
   }
 
   async function onSubmit(data: PermohonanFormData) {
+    if (!captchaToken) {
+      setCaptchaError("Selesaikan verifikasi keamanan terlebih dahulu.");
+      return;
+    }
+
     setSubmitting(true);
     setErrorMsg(null);
+    setCaptchaError(null);
     try {
       const res = await fetch("/api/permohonan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, turnstileToken: captchaToken }),
       });
       const json = await res.json();
 
@@ -130,6 +147,8 @@ export default function FormPermohonanPage() {
     } catch {
       setErrorMsg("Gagal mengirim permohonan. Coba lagi.");
     } finally {
+      setCaptchaToken(null);
+      turnstileRef.current?.reset();
       setSubmitting(false);
     }
   }
@@ -159,7 +178,13 @@ export default function FormPermohonanPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 px-6 py-16">
+    <>
+      <Script
+        id={DEFAULT_SCRIPT_ID}
+        src={SCRIPT_URL}
+        strategy="afterInteractive"
+      />
+      <main className="min-h-screen bg-slate-50 dark:bg-slate-950 px-6 py-16">
       <div className="max-w-3xl mx-auto bg-white dark:bg-slate-900 rounded-xl border border-slate-200 dark:border-slate-800 p-8">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -528,6 +553,37 @@ export default function FormPermohonanPage() {
             }
           />
 
+          {turnstileSiteKey ? (
+            <div>
+              <Turnstile
+                ref={turnstileRef}
+                siteKey={turnstileSiteKey}
+                injectScript={false}
+                onSuccess={(token) => {
+                  setCaptchaToken(token);
+                  setCaptchaError(null);
+                }}
+                onExpire={() => {
+                  setCaptchaToken(null);
+                  setCaptchaError("Verifikasi keamanan kedaluwarsa. Silakan ulangi.");
+                }}
+                onError={() => {
+                  setCaptchaToken(null);
+                  setCaptchaError(
+                    "Verifikasi keamanan gagal dimuat. Muat ulang halaman lalu coba lagi."
+                  );
+                }}
+              />
+              {captchaError && (
+                <p className="mt-2 text-sm text-red-600">{captchaError}</p>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-red-600 bg-red-50 rounded-md px-3 py-2">
+              Verifikasi keamanan belum dikonfigurasi. Hubungi administrator.
+            </p>
+          )}
+
           {errorMsg && (
             <p className="text-sm text-red-600 bg-red-50 rounded-md px-3 py-2">
               {errorMsg}
@@ -536,14 +592,15 @@ export default function FormPermohonanPage() {
 
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || !captchaToken || !turnstileSiteKey}
             className="w-full rounded-lg bg-blue-600 py-3 font-medium text-white hover:bg-blue-700 disabled:opacity-60 disabled:cursor-not-allowed transition mt-4"
           >
             {submitting ? "Mengirim..." : "Ajukan Permohonan"}
           </button>
         </form>
-      </div>
-    </main>
+        </div>
+      </main>
+    </>
   );
 }
 

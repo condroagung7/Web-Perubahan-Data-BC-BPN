@@ -10,13 +10,90 @@ import {
 import { sanitizeDeep, sanitizeTrackingCode } from "@/lib/security/sanitize";
 
 const EMPTY_MANIFEST_VALUE = "-";
+const TURNSTILE_VERIFY_URL =
+  "https://challenges.cloudflare.com/turnstile/v0/siteverify";
+
+type TurnstileVerificationResult = {
+  success: boolean;
+  hostname?: string;
+  "error-codes"?: string[];
+};
+
+async function verifyTurnstileToken(
+  token: string,
+  request: NextRequest
+): Promise<{ valid: boolean; error?: string }> {
+  const secret = process.env.TURNSTILE_SECRET_KEY;
+
+  if (!secret) {
+    console.error("TURNSTILE_SECRET_KEY is not configured");
+    return { valid: false, error: "Verifikasi keamanan belum dikonfigurasi" };
+  }
+
+  const formData = new FormData();
+  formData.set("secret", secret);
+  formData.set("response", token);
+
+  const clientIp = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  if (clientIp) {
+    formData.set("remoteip", clientIp);
+  }
+
+  try {
+    const response = await fetch(TURNSTILE_VERIFY_URL, {
+      method: "POST",
+      body: formData,
+      cache: "no-store",
+    });
+
+    if (!response.ok) {
+      console.error("Turnstile verification request failed:", response.status);
+      return { valid: false, error: "Verifikasi keamanan tidak dapat diproses" };
+    }
+
+    const result = (await response.json()) as TurnstileVerificationResult;
+    if (!result.success) {
+      console.warn("Turnstile token rejected:", result["error-codes"]);
+      return { valid: false, error: "Verifikasi keamanan tidak valid atau kedaluwarsa" };
+    }
+
+    if (result.hostname && result.hostname !== request.nextUrl.hostname) {
+      console.warn("Turnstile hostname mismatch:", {
+        expected: request.nextUrl.hostname,
+        received: result.hostname,
+      });
+      return { valid: false, error: "Verifikasi keamanan tidak valid" };
+    }
+
+    return { valid: true };
+  } catch (error) {
+    console.error("Turnstile verification error:", error);
+    return { valid: false, error: "Verifikasi keamanan tidak dapat diproses" };
+  }
+}
 
 export const POST = secureHandler(
   async (request: NextRequest) => {
     const body = await request.json();
+    const { turnstileToken, ...formBody } = body ?? {};
+
+    if (typeof turnstileToken !== "string" || !turnstileToken) {
+      return NextResponse.json(
+        { error: "Verifikasi keamanan wajib diselesaikan" },
+        { status: 403 }
+      );
+    }
+
+    const turnstile = await verifyTurnstileToken(turnstileToken, request);
+    if (!turnstile.valid) {
+      return NextResponse.json(
+        { error: turnstile.error ?? "Verifikasi keamanan gagal" },
+        { status: 403 }
+      );
+    }
 
     // Sanitize all string inputs before validation
-    const sanitizedBody = sanitizeDeep(body);
+    const sanitizedBody = sanitizeDeep(formBody);
 
     const parsed = permohonanSchema.safeParse(sanitizedBody);
 
