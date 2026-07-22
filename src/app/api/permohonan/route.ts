@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { permohonanSchema } from "@/lib/validations/permohonan";
 import { kirimNotifikasiPermohonanBaru } from "@/lib/email/resend";
+import { kirimNotifikasiTelegram } from "@/lib/telegram/telegram";
 import { secureHandler } from "@/lib/security/api-handler";
 import {
   RATE_LIMIT_PERMOHONAN,
@@ -158,6 +159,12 @@ export const POST = secureHandler(
       await kirimNotifikasiPermohonanBaru(data);
     } catch (emailError) {
       console.error("Gagal kirim email notifikasi:", emailError);
+    }
+
+    try {
+      await kirimNotifikasiTelegram(data);
+    } catch (telegramError) {
+      console.error("Gagal kirim notifikasi Telegram:", telegramError);
     }
 
     return NextResponse.json(

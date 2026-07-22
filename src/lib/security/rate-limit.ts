@@ -175,3 +175,10 @@ export const RATE_LIMIT_UPLOAD: RateLimitConfig = {
   maxRequests: 10,
   windowSeconds: 60,
 };
+
+/** Login CAPTCHA verification: 5 attempts per 5 minutes per IP */
+export const RATE_LIMIT_LOGIN: RateLimitConfig = {
+  identifier: "login",
+  maxRequests: 5,
+  windowSeconds: 300,
+};

@@ -4,6 +4,8 @@ import { isAdminEmail } from "@/lib/auth/admin";
 import type { Permohonan } from "@/types/database";
 import DashboardTable from "@/components/admin/DashboardTable";
 import PageThemeToggle from "@/components/theme/PageThemeToggle";
+import Link from "next/link";
+import { Settings } from "lucide-react";
 
 export default async function AdminDashboardPage() {
   const supabase = await createClient();
@@ -37,7 +39,16 @@ export default async function AdminDashboardPage() {
               Tinjau dokumen pendukung dan proses permohonan perubahan data yang masuk.
             </p>
           </div>
-          <PageThemeToggle />
+          <div className="flex items-center gap-3">
+            <Link
+              href="/admin/settings"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-700"
+            >
+              <Settings className="h-4 w-4" />
+              Pengaturan
+            </Link>
+            <PageThemeToggle />
+          </div>
         </div>
 
         <div className="mt-6">

@@ -68,6 +68,14 @@ export interface ChatMessage {
   text: string;
 }
 
+export interface TelegramAdmin {
+  id: string;
+  name: string;
+  chat_id: string;
+  is_active: boolean;
+  created_at: string;
+}
+
 export interface Database {
   public: {
     Tables: {
