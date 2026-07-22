@@ -102,6 +102,7 @@ function formatTelegramMessage(permohonan: Permohonan): string {
       day: "numeric",
       hour: "2-digit",
       minute: "2-digit",
+      timeZone: "Asia/Makassar",
     }
   );
 
@@ -112,7 +113,7 @@ function formatTelegramMessage(permohonan: Permohonan): string {
 • <b>Email:</b> ${permohonan.email_perusahaan}
 • <b>Kode Tracking:</b> <code>${permohonan.kode_tracking}</code>
 • <b>Jenis Perubahan:</b> ${permohonan.jenis_perubahan_data}
-• <b>Alasan:</b> ${permohonan.alasan_perubahan}
+• <b>Alasan:</b> ${permohonan.perihal}
 • <b>Tanggal Pengajuan:</b> ${formattedDate}
 
 ${
@@ -126,7 +127,7 @@ ${
     : ""
 }
 
-🔗 <a href="${process.env.NEXT_PUBLIC_APP_URL}/admin">Login ke Dashboard</a> untuk proses lebih lanjut.
+🔗 <a href="${process.env.NEXT_PUBLIC_APP_URL}admin/dashboard/">Login ke Dashboard</a> untuk proses lebih lanjut.
   `.trim();
 }
 
