@@ -154,6 +154,164 @@ function bodyIndented(text: string, opts: { after?: number } = {}) {
   });
 }
 
+function notaDinas(data: Permohonan, tanggalSurat: string) {
+  const tanggalND = new Date().toLocaleDateString("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  return [
+    ...kopSurat(),
+
+    // Judul NOTA DINAS
+    para([run("NOTA DINAS")], {
+      alignment: AlignmentType.CENTER,
+      after: 20,
+      before: 100,
+    }),
+    para([run(`NOMOR ND-            /KBC.160103/${new Date().getFullYear()}`)], {
+      alignment: AlignmentType.CENTER,
+      after: 300,
+    }),
+
+    // Tabel header Nota Dinas
+    new Table({
+      width: { size: CONTENT_WIDTH, type: WidthType.DXA },
+      layout: TableLayoutType.FIXED,
+      borders: noBorder,
+      rows: [
+        metaRow("Kepada", "Yth. Kepala Kantor"),
+        metaRow("Dari", "Kepala Seksi Perbendaharaan"),
+        metaRow("Sifat", "Biasa"),
+        metaRow("Lampiran", "Satu berkas"),
+        metaRow(
+          "Hal",
+          `Tindak Lanjut Permohonan Perbaikan Data BC 1.1 ${data.jenis_perubahan_data} nomor ${data.nomor_pendaftaran_bc11}`
+        ),
+        metaRow("Tanggal", tanggalND),
+      ],
+    }),
+
+    empty(200),
+
+    // Isi surat
+    bodyIndented(
+      `Sehubungan dengan surat dari ${data.nama_perusahaan} Nomor ${data.nomor_surat_permohonan} tanggal ${tanggalSurat} perihal ${data.perihal} yang berkasnya diterima lengkap pada tanggal ${tanggalSurat}, dengan hormat kami sampaikan hal-hal sebagai berikut:`,
+      { after: 200 }
+    ),
+
+    bodyIndented(
+      `PT. ${data.nama_perusahaan} mengajukan perubahan data pada BC 1.1 ${data.jenis_perubahan_data} nomor ${data.nomor_pendaftaran_bc11}, yaitu:`,
+      { after: 200 }
+    ),
+
+    // Tabel perubahan data
+    new Table({
+      width: { size: TABLE_WIDTH, type: WidthType.DXA },
+      indent: { size: BODY_INDENT, type: WidthType.DXA },
+      layout: TableLayoutType.FIXED,
+      rows: [
+        new TableRow({
+          children: [
+            gridCell("Data BC 1.1 Inward", 2700, {
+              bold: true,
+              align: AlignmentType.CENTER,
+            }),
+            gridCell("Semula", 2680, { bold: true, align: AlignmentType.CENTER }),
+            gridCell("Menjadi", 2680, { bold: true, align: AlignmentType.CENTER }),
+          ],
+        }),
+        ...data.detail_perubahan.map(
+          (item) =>
+            new TableRow({
+              children: [
+                gridCell(item.data_yang_dirubah, 2700),
+                gridCell(item.data_semula, 2680),
+                gridCell(item.data_seharusnya, 2680),
+              ],
+            })
+        ),
+      ],
+    }),
+
+    empty(200),
+
+    para([run("a. Sesuai hasil penelitian di dokumen pendukung yang dilampirkan berupa …………………")], {
+      alignment: AlignmentType.JUSTIFIED,
+      indent: { left: BODY_INDENT },
+      line: LINE_15,
+      after: 160,
+    }),
+
+    para([run("b. Sesuai hasil penelitian Ceisa 4.0 diketahui bahwa…………………")], {
+      alignment: AlignmentType.JUSTIFIED,
+      indent: { left: BODY_INDENT },
+      line: LINE_15,
+      after: 220,
+    }),
+
+    numbered(
+      "Dasar Hukum Perubahan Data RKSP, Inward Manifes dan Outward Manifes:",
+      2
+    ),
+
+    // PMK
+    para([run("• Peraturan Menteri Keuangan RI nomor 158/PMK.04/2017 sebagaimana telah diubah dengan Peraturan Menteri Keuangan Nomor 90/PMK.01/2020:")], {
+      alignment: AlignmentType.JUSTIFIED,
+      indent: { left: 720, hanging: 360 },
+      line: LINE_15,
+      after: 120,
+    }),
+
+    para([run("- Pasal 19 ayat (1) menyebutkan \"Pengangkut sebagaimana dimaksud dalam Pasal 2 ayat (2) dapat melakukan perbaikan data pada RKSP, Inward Manifest atau Outward Manifest sesuai dengan dokumen pengangkutan yang diterbitkannya ke Kantor Pabean tempat pendaftaran\".")], {
+      alignment: AlignmentType.JUSTIFIED,
+      indent: { left: 1080, hanging: 360 },
+      line: LINE_15,
+      after: 120,
+    }),
+
+    para([run("- Pasal 19 ayat (2) menyebutkan \"Perbaikan data RKSP, Inward Manifest, dan Outward Manifest sebagaimana dimaksud pada ayat (1) dengan rincian: a. pemberitahuan pabean pengangkutan; b. Pengangkut; c. jenis perbaikan data; d. waktu pengajuan perbaikan; e. batas waktu perbaikan; f. bentuk persetujuan; dan g. keterangan lainnya, dapat dilakukan sesuai dengan ketentuan dalam lampiran yang merupakan bagian tidak terpisahkan dari Peraturan Menteri ini.\"")], {
+      alignment: AlignmentType.JUSTIFIED,
+      indent: { left: 1080, hanging: 360 },
+      line: LINE_15,
+      after: 160,
+    }),
+
+    // PER-38/BC/2017
+    para([run("• Peraturan Direktur Jenderal Bea dan Cukai Nomor PER-38/BC/2017 sebagaimana telah diubah terakhir dengan Peraturan Direktur Jenderal Bea dan Cukai Nomor PER-11/BC/2020:")], {
+      alignment: AlignmentType.JUSTIFIED,
+      indent: { left: 720, hanging: 360 },
+      line: LINE_15,
+      after: 120,
+    }),
+
+    para([run("- Pasal 19 ayat (1) menyebutkan \"Pengangkut sebagaimana pasal 2 ayat (2) dapat melakukan perbaikan data pada RKSP, Inward Manifest atau Outward Manifest sesuai dengan dokumen pengangkutan yang diterbitkannya ke Kantor Pabean Tempat Pendaftaran\".")], {
+      alignment: AlignmentType.JUSTIFIED,
+      indent: { left: 1080, hanging: 360 },
+      line: LINE_15,
+      after: 120,
+    }),
+
+    para([run("- Pasal 19 ayat (2) menyebutkan \"Perbaikan data RKSP, Inward Manifest dan Outward Manifest sebagaimana di maksud pada ayat (1) dapat dilakukan sesuai dengan peraturan perundang-undangan mengenai manifes\".")], {
+      alignment: AlignmentType.JUSTIFIED,
+      indent: { left: 1080, hanging: 360 },
+      line: LINE_15,
+      after: 220,
+    }),
+
+    bodyIndented(
+      `Berdasarkan hal tersebut di atas, kami berpendapat permohonan perubahan data pada ${data.jenis_perubahan_data} manifes yang diajukan oleh ${data.nama_perusahaan} dapat dipertimbangkan untuk disetujui.`,
+      { after: 220 }
+    ),
+
+    bodyIndented(
+      `Demikian disampaikan untuk mendapat keputusan, dan apabila Bapak tidak berpendapat lain, bersama ini dilampirkan konsep surat persetujuan perubahan dimaksud.`,
+      { after: 300 }
+    ),
+  ];
+}
+
 function kopSurat() {
   return [
     para([run("KEMENTERIAN KEUANGAN REPUBLIK INDONESIA")], {
@@ -216,7 +374,7 @@ export async function generateSuratPersetujuan(data: Permohonan): Promise<Buffer
       })
   );
 
-  const children = [
+  const sectionOneChildren = [
     ...kopSurat(),
 
     new Table({
@@ -365,6 +523,8 @@ export async function generateSuratPersetujuan(data: Permohonan): Promise<Buffer
     }),
   ];
 
+  const sectionTwoChildren = notaDinas(data, tanggalSurat);
+
   const doc = new Document({
     styles: {
       default: {
@@ -389,7 +549,23 @@ export async function generateSuratPersetujuan(data: Permohonan): Promise<Buffer
             },
           },
         },
-        children,
+        children: sectionOneChildren,
+      },
+      {
+        properties: {
+          page: {
+            size: { width: PAGE_WIDTH, height: PAGE_HEIGHT },
+            margin: {
+              top: 1080,
+              right: 1440,
+              bottom: 1080,
+              left: 1440,
+              header: 708,
+              footer: 708,
+            },
+          },
+        },
+        children: sectionTwoChildren,
       },
     ],
   });
