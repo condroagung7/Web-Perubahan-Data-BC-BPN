@@ -24,6 +24,7 @@ const STATUS_LABEL: Record<string, { text: string; className: string }> = {
   },
   proses: { text: "Proses", className: "bg-blue-100 text-blue-700" },
   persetujuan: { text: "Persetujuan", className: "bg-green-100 text-green-700" },
+  baw: { text: "BAW", className: "bg-purple-100 text-purple-700" },
 };
 
 function getDisplayStatus(data: StatusData) {

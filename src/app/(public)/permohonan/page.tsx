@@ -351,7 +351,7 @@ export default function FormPermohonanPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <Field label="Nomor Pos" error={errors.nomor_pos?.message}>
-                  <input {...register("nomor_pos")} className="input" />
+                  <input {...register("nomor_pos")} className="input" placeholder="0001"/>
                 </Field>
                 <Field
                   label="Nama Sarana Pengangkut"

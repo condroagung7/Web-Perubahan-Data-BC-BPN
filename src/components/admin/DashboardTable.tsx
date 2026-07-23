@@ -26,12 +26,14 @@ const STATUS_SEKSI_LABEL: Record<StatusSeksi, string> = {
   konfirmasi_seksi_terkait: "Konfirmasi Seksi Terkait",
   proses: "Proses",
   persetujuan: "Persetujuan",
+  baw: "BAW",
 };
 
 const STATUS_SEKSI_OPTIONS: StatusSeksi[] = [
   "konfirmasi_seksi_terkait",
   "proses",
   "persetujuan",
+  "baw",
 ];
 
 type DisplayStatus = StatusPermohonan | StatusSeksi;
@@ -47,6 +49,7 @@ const DISPLAY_STATUS_LABEL: Record<DisplayStatus, { text: string; className: str
   },
   proses: { text: "Proses", className: "bg-blue-100 text-blue-700" },
   persetujuan: { text: "Persetujuan", className: "bg-green-100 text-green-700" },
+  baw: { text: "BAW", className: "bg-purple-100 text-purple-700" },
 };
 
 function getDisplayStatus(permohonan: Permohonan): DisplayStatus {

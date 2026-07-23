@@ -14,62 +14,65 @@ function getResend() {
   return resendClient;
 }
 
-function tabelDetailHtml(data: Permohonan) {
-  const rows = data.detail_perubahan
-    .map(
-      (d) => `
-        <tr>
-          <td style="padding:6px 10px;border:1px solid #e2e8f0;">${d.data_yang_dirubah}</td>
-          <td style="padding:6px 10px;border:1px solid #e2e8f0;">${d.data_semula}</td>
-          <td style="padding:6px 10px;border:1px solid #e2e8f0;">${d.data_seharusnya}</td>
-        </tr>`
-    )
-    .join("");
+function getSalamWaktu(): string {
+  // Asia/Makassar is UTC+8
+  const now = new Date();
+  const makassarHour = (now.getUTCHours() + 8) % 24;
+  const makassarMinutes = makassarHour * 60 + now.getUTCMinutes();
 
-  return `
-    <table style="border-collapse:collapse;width:100%;margin-top:8px;">
-      <thead>
-        <tr style="background:#f1f5f9;">
-          <th style="padding:6px 10px;border:1px solid #e2e8f0;text-align:left;">Data yang Dirubah</th>
-          <th style="padding:6px 10px;border:1px solid #e2e8f0;text-align:left;">Data Semula</th>
-          <th style="padding:6px 10px;border:1px solid #e2e8f0;text-align:left;">Data Seharusnya</th>
-        </tr>
-      </thead>
-      <tbody>${rows}</tbody>
-    </table>
-  `;
+  if (makassarMinutes >= 0 && makassarMinutes < 11 * 60) return "pagi";
+  if (makassarMinutes >= 11 * 60 && makassarMinutes < 15 * 60) return "siang";
+  if (makassarMinutes >= 15 * 60 && makassarMinutes < 18.5 * 60) return "sore";
+  return "malam";
+}
+
+function formatTanggalIndonesia(isoDate: string): string {
+  const namaBulan = [
+    "Januari", "Februari", "Maret", "April", "Mei", "Juni",
+    "Juli", "Agustus", "September", "Oktober", "November", "Desember",
+  ];
+
+  // Asia/Makassar is UTC+8
+  const date = new Date(isoDate);
+  const makassarDate = new Date(date.getTime() + 8 * 60 * 60 * 1000);
+
+  const hari = makassarDate.getUTCDate();
+  const bulan = namaBulan[makassarDate.getUTCMonth()];
+  const tahun = makassarDate.getUTCFullYear();
+
+  return `${hari} ${bulan} ${tahun}`;
 }
 
 export async function kirimNotifikasiPermohonanBaru(data: Permohonan) {
+  const salam = getSalamWaktu();
+  const tanggalDiterima = formatTanggalIndonesia(data.created_at);
+
   return getResend().emails.send({
     from: process.env.EMAIL_FROM!,
     to: process.env.EMAIL_TUJUAN_INSTANSI!,
     subject: `Permohonan Perubahan Data Baru - ${data.nama_perusahaan} (${data.kode_tracking})`,
     html: `
-      <div style="font-family: sans-serif; max-width: 640px; margin: 0 auto;">
-        <h2>Permohonan Perubahan Data Baru</h2>
-        <table style="width: 100%; border-collapse: collapse;">
-          <tr><td style="padding: 6px 0;"><strong>Kode Tracking</strong></td><td>${data.kode_tracking}</td></tr>
-          <tr><td style="padding: 6px 0;"><strong>Nama Perusahaan</strong></td><td>${data.nama_perusahaan}</td></tr>
-          <tr><td style="padding: 6px 0;"><strong>Email Perusahaan</strong></td><td>${data.email_perusahaan}</td></tr>
-          <tr><td style="padding: 6px 0;"><strong>Nomor Surat Permohonan</strong></td><td>${data.nomor_surat_permohonan}</td></tr>
-          <tr><td style="padding: 6px 0;"><strong>Tanggal Surat</strong></td><td>${data.tanggal_surat_permohonan}</td></tr>
-          <tr><td style="padding: 6px 0;"><strong>Perihal</strong></td><td>${data.perihal}</td></tr>
-          <tr><td style="padding: 6px 0;"><strong>Jenis Perubahan Data</strong></td><td>${data.jenis_perubahan_data}</td></tr>
-          <tr><td style="padding: 6px 0;"><strong>Pihak Pengaju</strong></td><td>${data.pihak_pengaju}</td></tr>
-          <tr><td style="padding: 6px 0;"><strong>Nomor Aju Manifes</strong></td><td>${data.nomor_aju_manifes}</td></tr>
-          <tr><td style="padding: 6px 0;"><strong>Nomor Pos</strong></td><td>${data.nomor_pos}</td></tr>
-          <tr><td style="padding: 6px 0;"><strong>Nama Sarana Pengangkut</strong></td><td>${data.nama_sarana_pengangkut}</td></tr>
-          <tr><td style="padding: 6px 0;"><strong>Nomor BL/AWB</strong></td><td>${data.nomor_bl_awb}</td></tr>
-          <tr><td style="padding: 6px 0;"><strong>Shipper / Consignee</strong></td><td>${data.nama_shipper} / ${data.nama_consignee}</td></tr>
-          <tr><td style="padding: 6px 0;"><strong>Nomor Pendaftaran BC 1.1</strong></td><td>${data.nomor_pendaftaran_bc11}</td></tr>
-          <tr><td style="padding: 6px 0;"><strong>Alasan Perubahan</strong></td><td>${data.alasan_perubahan}</td></tr>
-          
-        </table>
-        <p style="margin-top:16px;"><strong>Detail Perubahan Data:</strong></p>
-        ${tabelDetailHtml(data)}
-        <p style="margin-top: 16px; color: #666; font-size: 13px;">
-          Silakan login ke dashboard admin untuk meninjau dan memproses permohonan ini.
+      <div style="font-family: sans-serif; max-width: 640px; margin: 0 auto; line-height: 1.6;">
+        <p style="margin: 0 0 2px 0;"><strong>Dari ${data.nama_perusahaan}</strong></p>
+        <p style="margin: 0 0 16px 0; color:#475569;">${data.email_perusahaan}</p>
+
+        <p style="margin: 0 0 12px 0;">Selamat ${salam},</p>
+        <p style="margin: 0 0 12px 0;">Kami informasikan bahwa surat yang Saudara ajukan dengan rincian:</p>
+
+        <div style="margin: 12px 0;">
+          <p style="margin: 4px 0;"><strong>nomor surat</strong> : ${data.nomor_surat_permohonan}</p>
+          <p style="margin: 4px 0;"><strong>tanggal surat</strong> : ${data.tanggal_surat_permohonan}</p>
+          <p style="margin: 4px 0;"><strong>hal</strong> : ${data.perihal}</p>
+          <p style="margin: 4px 0;"><strong>Nomor agenda</strong> : …………</p>
+          <p style="margin: 4px 0;"><strong>Kode tracking</strong> : ${data.kode_tracking}</p>
+        </div>
+
+        <p style="margin: 12px 0;">Telah kami terima pada tanggal <strong>${tanggalDiterima}</strong>, silahkan cek status berkala di tautan beriman.my.id/status</p>
+
+        <p style="margin: 12px 0;">Terima Kasih.</p>
+
+        <p style="margin-top: 24px; color: #666; font-size: 13px; line-height: 1.5;">
+          KPPBC TMP B Balikpapan berkomitmen untuk selalu menjaga integritas dalam pengawasan dan pelayanan yang terbaik kepada seluruh pengguna layanan dan mitra kerja.
         </p>
       </div>
     `,

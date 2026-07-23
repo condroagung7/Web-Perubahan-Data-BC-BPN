@@ -1,5 +1,5 @@
 export type StatusPermohonan = "pending" | "diproses" | "disetujui" | "ditolak";
-export type StatusSeksi = "konfirmasi_seksi_terkait" | "proses" | "persetujuan";
+export type StatusSeksi = "konfirmasi_seksi_terkait" | "proses" | "persetujuan" | "baw";
 export type JenisPerubahanData = "RKSP" | "INWARD" | "OUTWARD";
 export type PihakPengaju = "NVOCC" | "Operator Sarana Pengangkut";
 
