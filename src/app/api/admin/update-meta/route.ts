@@ -18,6 +18,7 @@ const STATUS_SEKSI_VALUES: StatusSeksi[] = [
   "konfirmasi_seksi_terkait",
   "proses",
   "persetujuan",
+  "baw",
 ];
 
 export const POST = secureHandler(
