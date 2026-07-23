@@ -53,21 +53,22 @@ export async function kirimNotifikasiPermohonanBaru(data: Permohonan) {
     subject: `Permohonan Perubahan Data Baru - ${data.nama_perusahaan} (${data.kode_tracking})`,
     html: `
       <div style="font-family: sans-serif; max-width: 640px; margin: 0 auto; line-height: 1.6;">
-        <p style="margin: 0 0 2px 0;"><strong>Dari ${data.nama_perusahaan}</strong></p>
+        <p style="margin: 0 0 2px 0;">Selamat ${salam},</p>
+        <p style="margin: 0 0 2px 0;"><strong>${data.nama_perusahaan}</strong></p>
         <p style="margin: 0 0 16px 0; color:#475569;">${data.email_perusahaan}</p>
 
-        <p style="margin: 0 0 12px 0;">Selamat ${salam},</p>
         <p style="margin: 0 0 12px 0;">Kami informasikan bahwa surat yang Saudara ajukan dengan rincian:</p>
 
         <div style="margin: 12px 0;">
           <p style="margin: 4px 0;"><strong>nomor surat</strong> : ${data.nomor_surat_permohonan}</p>
           <p style="margin: 4px 0;"><strong>tanggal surat</strong> : ${data.tanggal_surat_permohonan}</p>
           <p style="margin: 4px 0;"><strong>hal</strong> : ${data.perihal}</p>
-          <p style="margin: 4px 0;"><strong>Nomor agenda</strong> : …………</p>
-          <p style="margin: 4px 0;"><strong>Kode tracking</strong> : ${data.kode_tracking}</p>
+          <p style="margin: 4px 0;"><strong>kode tracking</strong> : ${data.kode_tracking}</p>
+          <p style="margin: 4px 0;"><strong>nomor agenda</strong> : </p>
+          <p style="margin: 4px 0;"><strong>ID surat</strong> : </p>
         </div>
 
-        <p style="margin: 12px 0;">Telah kami terima pada tanggal <strong>${tanggalDiterima}</strong>, silahkan cek status berkala di tautan beriman.my.id/status</p>
+        <p style="margin: 12px 0;">Telah kami terima pada tanggal <strong>${tanggalDiterima}</strong>, silahkan cek status berkala di beriman.my.id/status</p>
 
         <p style="margin: 12px 0;">Terima Kasih.</p>
 
