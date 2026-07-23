@@ -201,9 +201,9 @@ function notaDinas(data: Permohonan, tanggalSurat: string) {
       { after: 200 }
     ),
 
-    bodyIndented(
+    numbered(
       `PT. ${data.nama_perusahaan} mengajukan perubahan data pada BC 1.1 ${data.jenis_perubahan_data} nomor ${data.nomor_pendaftaran_bc11}, yaitu:`,
-      { after: 200 }
+      1
     ),
 
     // Tabel perubahan data
@@ -300,9 +300,9 @@ function notaDinas(data: Permohonan, tanggalSurat: string) {
       after: 220,
     }),
 
-    bodyIndented(
+    numbered(
       `Berdasarkan hal tersebut di atas, kami berpendapat permohonan perubahan data pada ${data.jenis_perubahan_data} manifes yang diajukan oleh ${data.nama_perusahaan} dapat dipertimbangkan untuk disetujui.`,
-      { after: 220 }
+      3
     ),
 
     bodyIndented(
