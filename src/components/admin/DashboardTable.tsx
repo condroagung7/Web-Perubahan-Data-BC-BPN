@@ -100,11 +100,13 @@ function DokumenViewer({
   dokumen,
   permohonanId,
   zoom,
+  isLoading,
 }: {
   title: string;
   dokumen: PreviewDokumen | null;
   permohonanId: string | null;
   zoom: number;
+  isLoading?: boolean;
 }) {
   return (
     <div className="flex min-h-0 flex-1 flex-col rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950">
@@ -130,18 +132,28 @@ function DokumenViewer({
 
       <div className="min-h-105 flex-1 overflow-auto bg-slate-100 p-3 dark:bg-slate-900">
         {dokumen && permohonanId ? (
-          <div
-            className="h-225 origin-top-left overflow-hidden rounded-md bg-white shadow-sm"
-            style={{
-              width: `${100 / zoom}%`,
-              transform: `scale(${zoom})`,
-            }}
-          >
-            <iframe
-              src={getPreviewDokumenUrl(permohonanId, dokumen.url)}
-              title={title}
-              className="h-full w-full border-0"
-            />
+          <div className="relative h-full">
+            {isLoading && (
+              <div className="absolute inset-0 z-10 flex items-center justify-center rounded-md bg-white/80 dark:bg-slate-950/80">
+                <div className="flex flex-col items-center gap-2">
+                  <Loader2 size={24} className="animate-spin text-blue-600 dark:text-blue-400" />
+                  <p className="text-xs text-slate-600 dark:text-slate-400">Memuat dokumen...</p>
+                </div>
+              </div>
+            )}
+            <div
+              className="h-225 origin-top-left overflow-hidden rounded-md bg-white shadow-sm"
+              style={{
+                width: `${100 / zoom}%`,
+                transform: `scale(${zoom})`,
+              }}
+            >
+              <iframe
+                src={getPreviewDokumenUrl(permohonanId, dokumen.url)}
+                title={title}
+                className="h-full w-full border-0"
+              />
+            </div>
           </div>
         ) : (
           <div className="flex h-full min-h-105 items-center justify-center rounded-md border border-dashed border-slate-300 text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400">
@@ -172,6 +184,7 @@ export default function DashboardTable({
   const [deleteTarget, setDeleteTarget] = useState<Permohonan | null>(null);
   const [picTarget, setPicTarget] = useState<Permohonan | null>(null);
   const [picName, setPicName] = useState("");
+  const [iframeLoadingId, setIframeLoadingId] = useState<string | null>(null);
 
   async function loadStorageUsage() {
     setStorageLoading(true);
@@ -724,11 +737,16 @@ export default function DashboardTable({
                     <button
                       key={dokumen.url}
                       type="button"
-                      onClick={() => setActiveDokumenPath(dokumen.url)}
-                      className={`shrink-0 rounded-md border px-3 py-1.5 text-xs font-medium ${
+                      onClick={() => {
+                        setIframeLoadingId(dokumen.url);
+                        setActiveDokumenPath(dokumen.url);
+                        setTimeout(() => setIframeLoadingId(null), 800);
+                      }}
+                      disabled={iframeLoadingId !== null}
+                      className={`shrink-0 rounded-md border px-3 py-1.5 text-xs font-medium transition disabled:cursor-not-allowed ${
                         activeDokumen?.url === dokumen.url
                           ? "border-blue-600 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300"
-                          : "border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800"
+                          : "border-slate-200 text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:text-slate-200 dark:hover:bg-slate-800 disabled:opacity-50"
                       }`}
                     >
                       {dokumen.nama}
@@ -744,12 +762,14 @@ export default function DashboardTable({
                 dokumen={suratPermohonan}
                 permohonanId={selectedPermohonan.id}
                 zoom={zoom}
+                isLoading={iframeLoadingId === suratPermohonan?.url}
               />
               <DokumenViewer
                 title="Dokumen Pendukung"
                 dokumen={activeDokumen}
                 permohonanId={selectedPermohonan.id}
                 zoom={zoom}
+                isLoading={iframeLoadingId === activeDokumen?.url}
               />
             </div>
 
