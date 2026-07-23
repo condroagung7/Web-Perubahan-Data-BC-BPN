@@ -115,28 +115,40 @@ export async function kirimDokumenPendukungDiterimaLengkap(
   const daftarLampiran = attachments
     .map((attachment) => `<li>${attachment.filename}</li>`)
     .join("");
+  const salam = getSalamWaktu();
+  const tanggalDiterima = formatTanggalIndonesia(data.created_at);
 
   return getResend().emails.send({
     from: process.env.EMAIL_FROM!,
     to: process.env.EMAIL_TUJUAN_INSTANSI!,
     subject: `Dokumen Pendukung Permohonan Diterima Lengkap - ${data.kode_tracking}`,
     html: `
-      <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-        <p>
-          Dari. ${data.nama_perusahaan}<br />
-          <span style="color:#475569;">${data.email_perusahaan}</span>
+      <div style="font-family: sans-serif; max-width: 640px; margin: 0 auto; line-height: 1.6;">
+        <p style="margin: 0 0 2px 0;">Selamat ${salam},</p>
+        <p style="margin: 0 0 2px 0;"><strong>${data.nama_perusahaan}</strong></p>
+        <p style="margin: 0 0 16px 0; color:#475569;">${data.email_perusahaan}</p>
+
+        <p style="margin: 0 0 12px 0;">Kami informasikan bahwa surat yang Saudara ajukan dengan rincian:</p>
+
+        <div style="margin: 12px 0;">
+          <p style="margin: 4px 0;"><strong>nomor surat</strong> : ${data.nomor_surat_permohonan}</p>
+          <p style="margin: 4px 0;"><strong>tanggal surat</strong> : ${data.tanggal_surat_permohonan}</p>
+          <p style="margin: 4px 0;"><strong>hal</strong> : ${data.perihal}</p>
+          <p style="margin: 4px 0;"><strong>kode tracking</strong> : ${data.kode_tracking}</p>
+          <p style="margin: 4px 0;"><strong>nomor agenda</strong> : </p>
+          <p style="margin: 4px 0;"><strong>ID surat</strong> : </p>
+        </div>
+
+        <p style="margin: 12px 0;">Telah kami terima pada tanggal <strong>${tanggalDiterima}</strong>, silahkan cek status berkala di beriman.my.id/status</p>
+
+        <p style="margin: 12px 0;">Daftar lampiran:</p>
+        <ul style="margin: 12px 0;">${daftarLampiran}</ul>
+
+        <p style="margin: 12px 0;">Terima Kasih.</p>
+
+        <p style="margin-top: 24px; color: #666; font-size: 13px; line-height: 1.5;">
+          KPPBC TMP B Balikpapan berkomitmen untuk selalu menjaga integritas dalam pengawasan dan pelayanan yang terbaik kepada seluruh pengguna layanan dan mitra kerja.
         </p>
-        <p>
-          Permohonan perubahan data dengan kode tracking
-          <strong>${data.kode_tracking}</strong> telah dinyatakan
-          <strong>diterima lengkap</strong> oleh tim Manifes.
-        </p>
-        <p>
-          Seluruh dokumen pendukung yang tercatat pada aplikasi Beriman kami teruskan ke email ini.
-        </p>
-        <p><strong>Daftar lampiran:</strong></p>
-        <ul>${daftarLampiran}</ul>
-        <p>Terima kasih.</p>
       </div>
     `,
     attachments,
