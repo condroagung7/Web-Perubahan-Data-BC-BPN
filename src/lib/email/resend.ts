@@ -43,43 +43,6 @@ function formatTanggalIndonesia(isoDate: string): string {
   return `${hari} ${bulan} ${tahun}`;
 }
 
-export async function kirimNotifikasiPermohonanBaru(data: Permohonan) {
-  const salam = getSalamWaktu();
-  const tanggalDiterima = formatTanggalIndonesia(data.created_at);
-
-  return getResend().emails.send({
-    from: process.env.EMAIL_FROM!,
-    to: process.env.EMAIL_TUJUAN_INSTANSI!,
-    subject: `Permohonan Perubahan Data Baru - ${data.nama_perusahaan} (${data.kode_tracking})`,
-    html: `
-      <div style="font-family: sans-serif; max-width: 640px; margin: 0 auto; line-height: 1.6;">
-        <p style="margin: 0 0 2px 0;">Selamat ${salam},</p>
-        <p style="margin: 0 0 2px 0;"><strong>${data.nama_perusahaan}</strong></p>
-        <p style="margin: 0 0 16px 0; color:#475569;">${data.email_perusahaan}</p>
-
-        <p style="margin: 0 0 12px 0;">Kami informasikan bahwa surat yang Saudara ajukan dengan rincian:</p>
-
-        <div style="margin: 12px 0;">
-          <p style="margin: 4px 0;"><strong>nomor surat</strong> : ${data.nomor_surat_permohonan}</p>
-          <p style="margin: 4px 0;"><strong>tanggal surat</strong> : ${data.tanggal_surat_permohonan}</p>
-          <p style="margin: 4px 0;"><strong>hal</strong> : ${data.perihal}</p>
-          <p style="margin: 4px 0;"><strong>kode tracking</strong> : ${data.kode_tracking}</p>
-          <p style="margin: 4px 0;"><strong>nomor agenda</strong> : </p>
-          <p style="margin: 4px 0;"><strong>ID surat</strong> : </p>
-        </div>
-
-        <p style="margin: 12px 0;">Telah kami terima pada tanggal <strong>${tanggalDiterima}</strong>, silahkan cek status berkala di beriman.my.id/status</p>
-
-        <p style="margin: 12px 0;">Terima Kasih.</p>
-
-        <p style="margin-top: 24px; color: #666; font-size: 13px; line-height: 1.5;">
-          KPPBC TMP B Balikpapan berkomitmen untuk selalu menjaga integritas dalam pengawasan dan pelayanan yang terbaik kepada seluruh pengguna layanan dan mitra kerja.
-        </p>
-      </div>
-    `,
-  });
-}
-
 export async function kirimSuratPersetujuan(data: Permohonan, docxBuffer: Buffer) {
   return getResend().emails.send({
     from: process.env.EMAIL_FROM!,

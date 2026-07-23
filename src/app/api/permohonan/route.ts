@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceRoleClient } from "@/lib/supabase/server";
 import { permohonanSchema } from "@/lib/validations/permohonan";
-import { kirimNotifikasiPermohonanBaru } from "@/lib/email/resend";
 import { kirimNotifikasiTelegram } from "@/lib/telegram/telegram";
 import { secureHandler } from "@/lib/security/api-handler";
 import {
@@ -153,12 +152,6 @@ export const POST = secureHandler(
         { error: "Gagal menyimpan permohonan" },
         { status: 500 }
       );
-    }
-
-    try {
-      await kirimNotifikasiPermohonanBaru(data);
-    } catch (emailError) {
-      console.error("Gagal kirim email notifikasi:", emailError);
     }
 
     try {
